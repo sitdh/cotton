@@ -26,7 +26,7 @@ public class ConstantCollection {
 	
 	@Getter @Setter
 	@ManyToOne(fetch=FetchType.LAZY)
-	@JoinColumn(name="file_name")
+	@JoinColumn(name="fileId")
 	private FileName fileName;
 	
 	@Getter @Setter
