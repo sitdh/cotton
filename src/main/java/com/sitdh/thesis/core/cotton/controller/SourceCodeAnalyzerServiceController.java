@@ -1,6 +1,5 @@
 package com.sitdh.thesis.core.cotton.controller;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -12,26 +11,31 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.extern.slf4j.Slf4j;
+import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
+import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzerService;
 
-@Slf4j
+import lombok.extern.java.Log;
+
+@Log
 @RestController
 public class SourceCodeAnalyzerServiceController {
 	
 	private HttpHeaders headers;
 	
 	@Autowired
+	private ConstantAnalyzerService constantCollector;
+	
+	@Autowired
 	public SourceCodeAnalyzerServiceController(HttpHeaders headers) {
-		log.debug("Constructor reached");
+		log.info("Constructor reached");
 		this.headers = headers;
 	}
 	
 	@GetMapping("/code/constant")
-	public ResponseEntity<List<String>> constantsCollector() {
+	public ResponseEntity<List<ConstantData>> constantsCollector() {
 		
-		List<String> messages = Arrays.asList("A", "B", "C");
-		
-		return new ResponseEntity<>(messages, headers, HttpStatus.OK);
+		List<ConstantData> data = constantCollector.analyzed();
+		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 
 	@GetMapping("/code/graph")
