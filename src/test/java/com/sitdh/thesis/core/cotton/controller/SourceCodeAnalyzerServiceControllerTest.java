@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantsList;
-import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzerService;
+import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.database.entity.constants.ConstantType;
 
 @RunWith(SpringRunner.class)
@@ -42,7 +42,7 @@ public class SourceCodeAnalyzerServiceControllerTest {
 	}
 	
 	@MockBean(name="SimpleCollector")
-	private ConstantAnalyzerService simpleCollector;
+	private ConstantAnalyzer simpleCollector;
 
 	@Test
 	public void shouldReturnConsntantList() throws Exception {
