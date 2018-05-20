@@ -23,6 +23,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>10</java.version>
+		<tinkerpop.version>3.3.3</tinkerpop.version>
+		<bcel.version>6.2</bcel.version>
+		<javaassist.version>3.22.0-GA</javaassist.version>
 	</properties>
 
 	<dependencies>
@@ -43,6 +46,24 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- Call Graph Tools -->
+		<!-- https://mvnrepository.com/artifact/org.apache.bcel/bcel -->
+		<dependency>
+			<groupId>org.apache.bcel</groupId>
+			<artifactId>bcel</artifactId>
+			<version>${bcel.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.javassist/javassist -->
+		<dependency>
+		    <groupId>org.javassist</groupId>
+		    <artifactId>javassist</artifactId>
+		    <version>${javaassist.version}</version>
+		    <scope>provided</scope>
+		</dependency>
+		
+		<!-- End Call Graph Tools -->
 
 		<dependency>
 			<groupId>mysql</groupId>
@@ -68,6 +89,21 @@
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
 		</dependency>
+		
+		<!-- TinkerGraph -->
+		<dependency>
+			<groupId>org.apache.tinkerpop</groupId>
+			<artifactId>gremlin-core</artifactId>
+			<version>${tinkerpop.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.tinkerpop/gremlin-archetype-tinkergraph -->
+		<dependency>
+		    <groupId>org.apache.tinkerpop</groupId>
+		    <artifactId>tinkergraph-gremlin</artifactId>
+		    <version>${tinkerpop.version}</version>
+		    <scope>test</scope>
+		</dependency>
+				
 	</dependencies>
 
 	<build>
