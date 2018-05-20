@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
-import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzerService;
+import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 
 import lombok.extern.java.Log;
 
@@ -23,7 +23,9 @@ public class SourceCodeAnalyzerServiceController {
 	private HttpHeaders headers;
 	
 	@Autowired
-	private ConstantAnalyzerService constantCollector;
+	private ConstantAnalyzer constantCollector;
+	
+	
 	
 	@Autowired
 	public SourceCodeAnalyzerServiceController(HttpHeaders headers) {
