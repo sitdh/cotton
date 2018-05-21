@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
 
-@Service("SimpleCollector")
+@Service("SimpleConstantsCollectorAnalyzer")
 public class ConstantCollectorService implements ConstantAnalyzer {
 
 	@Override

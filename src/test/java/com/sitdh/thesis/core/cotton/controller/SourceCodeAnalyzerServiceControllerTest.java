@@ -1,6 +1,5 @@
 package com.sitdh.thesis.core.cotton.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantsList;
 import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
+import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
 import com.sitdh.thesis.core.cotton.database.entity.constants.ConstantType;
 
 @RunWith(SpringRunner.class)
@@ -41,8 +42,11 @@ public class SourceCodeAnalyzerServiceControllerTest {
 		floatList = new ConstantsList(ConstantType.STRING, Arrays.asList("A", "B", "C"));
 	}
 	
-	@MockBean(name="SimpleCollector")
+	@MockBean(name="SimpleConstantsCollectorAnalyzer")
 	private ConstantAnalyzer simpleCollector;
+	
+	@MockBean(name="SimpleGraphAnalyzer")
+	private GraphAnalyzer graphAnalyzer;
 
 	@Test
 	public void shouldReturnConsntantList() throws Exception {
@@ -57,7 +61,7 @@ public class SourceCodeAnalyzerServiceControllerTest {
 			.andDo(print())
 			.andExpect(status().isOk())
 			.andExpect(
-					content().string(
+					content().json(
 							"[{\"file_name\":\"LoremIpsum.java\","
 							+ "\"collection\":[{\"type\":\"string\",\"values\":[\"A\",\"B\",\"C\"]},"
 							+ "{\"type\":\"string\",\"values\":[\"A\",\"B\",\"C\"]}]},"
@@ -66,14 +70,31 @@ public class SourceCodeAnalyzerServiceControllerTest {
 		
 	}
 	
-	@Test
-	public void shouldReturnGraphStructure() throws Exception {
-		
+	public void should_not_provide_for_empty_variable() throws Exception {
 		this.mockMvc
 			.perform(get("/code/graph"))
+			.andExpect(status().is4xxClientError())
+			.andDo(print())
+			.andExpect(content().string("Not found"));
+	}
+	
+	@Test
+	public void should_return_graph_structure() throws Exception {
+		
+		List<String> graphInfo = Arrays.asList(
+				"'C:*.TaxableApplication' -> 'C:*.navigation.ApplicationNavigator' [label = 'methodA():methodB()'];",
+				"'C:*.TaxableApplication' -> 'C:*.runnable.ApplicationRunnable' [label = 'methodA():methodB()'];",
+				"'C:*.TaxableApplication' -> 'C:*.TaxableApplication';");
+		
+		when(graphAnalyzer.analyzed()).thenReturn(graphInfo);
+		
+		this.mockMvc
+			.perform(get("/code/graph/ab/bb"))
 			.andDo(print())
 			.andExpect(status().isOk())
-			.andExpect(content().string("{\"B\":\"C\",\"C\":\"D\",\"A\":\"B\"}"));
+			.andExpect(content().json("[\"'C:*.TaxableApplication' -> 'C:*.navigation.ApplicationNavigator' [label = 'methodA():methodB()'];\","
+					+ "\"'C:*.TaxableApplication' -> 'C:*.runnable.ApplicationRunnable' [label = 'methodA():methodB()'];\","
+					+ "\"'C:*.TaxableApplication' -> 'C:*.TaxableApplication';\"]"));
 	}
 
 }
