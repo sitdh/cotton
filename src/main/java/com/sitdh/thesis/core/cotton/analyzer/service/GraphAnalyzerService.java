@@ -1,14 +1,15 @@
 package com.sitdh.thesis.core.cotton.analyzer.service;
 
-import java.io.File;
-import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
+
+import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 
 import lombok.extern.java.Log;
 
@@ -20,6 +21,13 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	@Value("${graph.app.jenkins.workspace-location}")
 	private String sourceLocation;
 	
+	private LocationUtils locationUtil;
+	
+	@Autowired
+	GraphAnalyzerService(LocationUtils locationUtil) {
+		this.locationUtil = locationUtil;
+	}
+	
 	@Override
 	public List<String> analyzed() {
 		// TODO Auto-generated method stub
@@ -28,31 +36,15 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 
 	@Override
 	public Optional<String> sourceLocation(String slug, String branch) {
-		// TODO Auto-generated method stub
-		File directory = new File(sourceLocation);
-		File[] subdirs = directory.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+		String location = null;
 		
-		Optional<String> location = Optional.of("");
-		
-		for(File dir : subdirs) {
-			if (this.filter(dir.getName(), slug, branch)) {
-				log.info("Directory: " + dir.getName());
-				location = Optional.of(dir.getName());
-			}
+		try {
+			location = locationUtil.getProjectWorkspace(slug, branch);
+		} catch(FileNotFoundException e) {
+			log.throwing(this.getClass().getName(), sourceLocation, e);
 		}
 		
-		return location;
-	}
-	
-	private boolean filter(String currentDir, String slug, String branch) {
-		
-		return !currentDir.contains("@")
-				&& currentDir
-				.startsWith(
-						String.format(
-								"%s_%s",  
-								slug, 
-								branch)); 
+		return Optional.ofNullable(location);
 	}
 	
 }

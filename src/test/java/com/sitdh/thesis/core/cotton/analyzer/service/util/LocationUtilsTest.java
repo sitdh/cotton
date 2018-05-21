@@ -6,11 +6,11 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,12 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @PropertySource("classpath:/graph.properties")
 public class LocationUtilsTest {
 	
-	private static final String PROJECT = "may-shihiro";
-	
-	private static final String BRANCH = "haku";
-	
-	private static final String HASH_STRING = "a-b-c-d-e-f-g";
-	
+
 	@Autowired
 	private LocationUtils locationUtils;
 	
@@ -39,6 +34,12 @@ public class LocationUtilsTest {
 	
 	@Value("${graph.app.project.classes}")
 	private String classLocation;
+	
+	private static final String PROJECT = "may-shihiro";
+	
+	private static final String BRANCH = "haku";
+	
+	private static final String HASH_STRING = "a-b-c-d-e-f-g";
 	
 	@BeforeClass
 	public static void setupBeforeClass() throws IOException {
@@ -62,6 +63,13 @@ public class LocationUtilsTest {
 				workspaceTemplate + "@2@temp",
 				workspaceTemplate + "@3@temp"
 				);
+		
+		(new File(workspaceTemplate + "/A.class")).createNewFile();
+		(new File(workspaceTemplate + "/B.class")).createNewFile();
+		(new File(workspaceTemplate + "/C.class")).createNewFile();
+		
+		(new File(workspaceTemplate + "/A")).mkdirs();
+		(new File(workspaceTemplate + "/A/A1.class")).createNewFile();
 		
 		structureList.forEach(dir -> {
 			(new File(dir)).mkdirs();
@@ -87,7 +95,7 @@ public class LocationUtilsTest {
 				LocationUtilsTest.BRANCH,
 				LocationUtilsTest.HASH_STRING);
 				
-		String location = locationUtils.getProjectFromWorkspace(
+		String location = locationUtils.getProjectWorkspace(
 				LocationUtilsTest.PROJECT, 
 				LocationUtilsTest.BRANCH);
 		
@@ -96,7 +104,22 @@ public class LocationUtilsTest {
 	
 	@Test(expected = FileNotFoundException.class)
 	public void should_return_error_while_unknow_project_info() throws FileNotFoundException {
-		locationUtils.getProjectFromWorkspace("unknow-project", "secret");
+		locationUtils.getProjectWorkspace("unknow-project", "secret");
+	}
+	
+	@Test
+	public void should_list_all_class_file_from_project_workspace() throws IOException {
+		List<Path> classfileLocations = locationUtils.listClassFiles(LocationUtilsTest.PROJECT, LocationUtilsTest.BRANCH);
+		assertThat(classfileLocations.size() == 4, is(true));
+		classfileLocations.forEach(p -> {
+			assertThat(p.toString().endsWith("class"), is(true));
+		});
+	}
+	
+	@Test(expected = FileNotFoundException.class)
+	public void should_not_return_any_files_from_unknonw_project() throws IOException {
+		List<Path> classfileLocation = locationUtils.listClassFiles("unknown-prject", "secret");
+		assertThat(classfileLocation.size() == 0, is(true));
 	}
 
 }
