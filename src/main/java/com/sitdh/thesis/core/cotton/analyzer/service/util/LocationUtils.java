@@ -9,7 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.apache.bcel.classfile.ClassFormatException;
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.Method;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
@@ -43,7 +47,6 @@ public class LocationUtils {
 			}
 			
 		});
-		
 		if (f.length != 1) throw new FileNotFoundException("Project location not found");
 		
 		log.info(f[0].getAbsolutePath());
@@ -63,6 +66,34 @@ public class LocationUtils {
 			.forEach(classFiles::add);
 		
 		return classFiles;
+	}
+	
+	public Optional<Path> getMainClass(String slug, String branch) throws IOException {
+		
+		return this.listClassFiles(slug, branch)
+				.stream()
+				.filter(LocationUtils::filterForMainClass)
+				.findFirst();
+	}
+	
+	public static boolean filterForMainClass(Path path) {
+		
+		boolean hasMain = false;
+		
+		try {
+			Method[] methods = new ClassParser(path.toString()).parse().getMethods();
+			for(Method method : methods) {
+				log.info("Method: " + method.getName());
+				if("main".equals(method.getName())) {
+					hasMain = true;
+					break;
+				}
+			}
+		} catch (ClassFormatException | IOException e) {
+			log.throwing("LocationUtils", "fiterForMainClass", e);
+		}
+		
+		return hasMain;
 	}
 	
 }

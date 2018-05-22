@@ -15,6 +15,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.junit.Before;
 import org.junit.Test;
 
+import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 import com.sitdh.thesis.core.cotton.exception.PackageNotInterestedException;
 
 public class SourceCodeGraphBuilderTest {
@@ -42,14 +43,15 @@ public class SourceCodeGraphBuilderTest {
 		assertTrue(go.isPresent());
 		
 		GraphTraversalSource g = go.get();
-		assertEquals(3, g.V().count().next().intValue());
-		assertEquals(2, g.E().count().next().intValue());
+		assertEquals(7, g.V().count().next().intValue());
+		assertEquals(6, g.E().count().next().intValue());
 	}
 	
 	@Test
-	public void digraph_should_exists() {
+	public void digraph_should_exists() throws NoGraphToAnalyzeException {
 		String digraph = graphBuilder.getDigraph();
 		assertThat(digraph.startsWith("digraph"), is(true));
+		assertThat(digraph.contains("subgraph"), is(true));
 	}
 
 }

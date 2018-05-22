@@ -5,6 +5,7 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.bcel.classfile.Constant;
 import org.apache.bcel.classfile.ConstantPool;
@@ -15,25 +16,29 @@ import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
+import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
+import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
+import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
+import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 import com.sitdh.thesis.core.cotton.exception.PackageNotInterestedException;
 
 import lombok.extern.java.Log;
 
 @Log
 public class SourceCodeGraphBuilder extends EmptyVisitor {
+	
+	public static final String DIGRAPH_CLASS_TYPE = "class";
+	
+	public static final String DIGRAPH_METHOD_TYPE = "methods";
 
 	private JavaClass javaClass;
 	
 	private ConstantPoolGen constants;
 	
-	private TinkerGraph graph;
+//	private TinkerGraph graph;
 	
 	private GraphTraversalSource g;
-	
-	private Vertex primaryVertex;
 	
 	private String interestedPackage;
 	
@@ -41,15 +46,13 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 	
 	private List<String> graphStructure;
 	
-	private List<String> methodStructure;
-	
 	private String digraphMessage = "";
 	
 	private SourceCodeGraphBuilder(JavaClass jc, String interestedPackage) throws PackageNotInterestedException { 
 		this.javaClass = jc;
 		this.interestedPackage = interestedPackage;
-		this.graph = TinkerGraph.open();
-		this.g = graph.traversal();
+//		this.graph = TinkerGraph.open();
+//		this.g = graph.traversal();
 		this.constants = new ConstantPoolGen(javaClass.getConstantPool());
 		
 		if (!javaClass.getClassName().startsWith(interestedPackage)) {
@@ -58,12 +61,10 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 		
 		String shortName = this.getShortname(javaClass.getClassName());
 		
-		graphFormat = "\"C:" + shortName + "\" -> \"C:%s\"";
-		primaryVertex = graph.addVertex("type", "C", "name", shortName);
+		graphFormat = "\"C:" + shortName + "\" -> \"C:%s\";";
+//		primaryVertex = graph.addVertex("type", "C", "name", shortName);
 		
 		graphStructure = new ArrayList<String>();
-		
-		methodStructure = new ArrayList<String>();
 	}
 	
 	public static SourceCodeGraphBuilder analyzedForClass(JavaClass jc, String interestedPackage) throws PackageNotInterestedException {
@@ -79,8 +80,8 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 		}
 	}
 	
-	public String getDigraph() {
-		digraphMessage += this.convertToDigraph( graphStructure);
+	public String getDigraph() throws NoGraphToAnalyzeException {
+		digraphMessage += this.convertToDigraph(graphStructure);
 		return this.getShortname(this.digraphMessage);
 	}
 	
@@ -94,7 +95,7 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 				.start()
 				.getTraversalStack();
 		
-		methodStructure.addAll(p);
+		graphStructure.addAll(p);
 	}
 	
 	public void visitConstantPool(ConstantPool constantPool) {
@@ -122,10 +123,10 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 	}
 	
 	private GraphTraversalSource updateGraph(String referencedClass) {
-		Vertex referencedVertex = graph.addVertex("type", "C", "name", this.getShortname(referencedClass));
+//		Vertex referencedVertex = graph.addVertex("type", "C", "name", this.getShortname(referencedClass));
 		
-		primaryVertex.addEdge("linked", referencedVertex, "weight", 1f);
-		g.addE("linked").from(primaryVertex).to(referencedVertex);
+//		primaryVertex.addEdge("linked", referencedVertex, "weight", 1f);
+//		g.addE("linked").from(primaryVertex).to(referencedVertex);
 		
 		graphStructure.add(String.format(graphFormat, this.getShortname(referencedClass)));
 		
@@ -138,14 +139,49 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 		return StringUtils.replaceAll(className, interestedPackage, "*");
 	}
 	
-	private String convertToDigraph(List<String> graph) {
-		return "digraph { \n\t " 
-		+ StringUtils.replace(
-				StringUtils.join(graph, "\n\t"),
+	private String convertToDigraph(List<String> graph) throws NoGraphToAnalyzeException {
+		
+		if (graph.size() == 0) {
+			throw new NoGraphToAnalyzeException();
+		}
+		
+		List<String> classGraph = graph.stream()
+				.filter(g -> g.startsWith("\"C:"))
+				.collect(Collectors.toList());
+		
+		List<String> methodGraph = graph.stream()
+				.filter(g -> !g.startsWith("\"C:"))
+				.collect(Collectors.toList());
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("digraph G {" + System.lineSeparator());
+		sb.append("\trankdir=LR" + System.lineSeparator() + System.lineSeparator());
+		
+		sb.append(this.convertedSubgraph(classGraph, new ClassSubgraphTemplate(), "0"));
+		
+		sb.append(this.convertedSubgraph(methodGraph, new MethodSubgraphTemplate(),"1"));
+		
+		sb.append("}");
+		
+		return sb.toString();
+	}
+	
+	private String convertToSubgraph(List<String> subgraph, String id, SubgraphTemplate template) {
+		
+		String toGraph = StringUtils.replace(
+				StringUtils.join(subgraph, "\n\t"),
 				"'",
 				"\""
-				)
-			+ "}";
+				);
+		
+		return String.format(
+				template.template(),
+				id,
+				toGraph);
+	}
+	
+	private String convertedSubgraph(List<String> g, SubgraphTemplate template, String title) {
+		return g.size() > 0 ? this.convertToSubgraph(g, title, template) : "\n" ;
 	}
 
 }

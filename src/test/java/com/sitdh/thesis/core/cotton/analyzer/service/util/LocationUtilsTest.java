@@ -116,6 +116,17 @@ public class LocationUtilsTest {
 		});
 	}
 	
+	@Test
+	public void should_read_all_listed_class() throws IOException {
+		List<Path> classfileLocations = locationUtils.listClassFiles(LocationUtilsTest.PROJECT, LocationUtilsTest.BRANCH);
+		
+		for(Path p : classfileLocations) {
+			File f = new File(p.toAbsolutePath().toString());
+			assertThat(f.exists(), is(true));
+		}
+		
+	}
+	
 	@Test(expected = FileNotFoundException.class)
 	public void should_not_return_any_files_from_unknonw_project() throws IOException {
 		List<Path> classfileLocation = locationUtils.listClassFiles("unknown-prject", "secret");

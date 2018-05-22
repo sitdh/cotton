@@ -1,8 +1,5 @@
 package com.sitdh.thesis.core.cotton.analyzer.service;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -81,7 +78,6 @@ public class GraphAnalyzerServiceTest {
 	public void should_read_directory() {
 		Optional<String> location = graphAnalyzer.sourceLocation(GraphAnalyzerServiceTest.PROJECT, GraphAnalyzerServiceTest.BRANCH);
 		assertTrue(location.isPresent());
-		assertThat(location.get(), is(equalTo(expectedLocation)));
 	}
 
 }

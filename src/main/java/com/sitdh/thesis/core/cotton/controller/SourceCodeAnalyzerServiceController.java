@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
 import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
+import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.extern.java.Log;
 
@@ -45,12 +47,27 @@ public class SourceCodeAnalyzerServiceController {
 		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 
-	@GetMapping("/code/graph/{slug}/{branch}")
-	public @ResponseBody ResponseEntity<List<String>> analyzeSourcecodeForGraph(@PathVariable String slug, @PathVariable String branch) {
-		graphAnalyzer.sourceLocation(slug, branch);
+	@GetMapping("/code/graph/{slug}/{branch}/{interestedpackage}")
+	public @ResponseBody ResponseEntity<String> analyzeSourcecodeForGraph(@PathVariable String slug, @PathVariable String branch, @PathVariable String interestedpackage) {
 		
-		List<String> graphStructure = graphAnalyzer.analyzed();
+		String graphStructure;
 		
-		return  new ResponseEntity<>(graphStructure, headers, HttpStatus.OK);
+		HttpHeaders h = headers;
+		HttpStatus hs = HttpStatus.OK;
+		
+		try {
+			graphStructure = graphAnalyzer.analyzed(
+					slug, 
+					branch, 
+					interestedpackage);
+		} catch (NoGraphToAnalyzeException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			graphStructure = "No data found";
+			hs = HttpStatus.NO_CONTENT;
+			h.setContentType(MediaType.TEXT_PLAIN);
+		}
+		
+		return  new ResponseEntity<>(graphStructure, h, hs);
 	}
 }
