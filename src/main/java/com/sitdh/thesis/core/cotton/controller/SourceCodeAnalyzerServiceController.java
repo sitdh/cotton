@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,25 +48,29 @@ public class SourceCodeAnalyzerServiceController {
 		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 
-	@GetMapping("/code/graph/{slug}/{branch}/{interestedpackage}")
-	public @ResponseBody ResponseEntity<String> analyzeSourcecodeForGraph(@PathVariable String slug, @PathVariable String branch, @PathVariable String interestedpackage) {
+	@GetMapping("/code/graph/{slug}/{branch}")
+	public @ResponseBody ResponseEntity<String> analyzeSourcecodeForGraph(@PathVariable String slug, @PathVariable String branch, @RequestParam("p") String interestedpackage) {
 		
 		String graphStructure;
 		
 		HttpHeaders h = headers;
 		HttpStatus hs = HttpStatus.OK;
 		
+		log.info("Package: " + interestedpackage);
+		
 		try {
 			graphStructure = graphAnalyzer.analyzed(
 					slug, 
 					branch, 
 					interestedpackage);
+			
+			log.info(graphStructure);
+			
 		} catch (NoGraphToAnalyzeException e) {
-			// TODO Auto-generated catch block
-//			e.printStackTrace();
 			graphStructure = "No data found";
 			hs = HttpStatus.NO_CONTENT;
 			h.setContentType(MediaType.TEXT_PLAIN);
+			
 		}
 		
 		return  new ResponseEntity<>(graphStructure, h, hs);

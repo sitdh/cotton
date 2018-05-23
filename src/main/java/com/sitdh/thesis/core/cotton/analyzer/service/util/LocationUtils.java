@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import java.util.Optional;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.Method;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
@@ -59,11 +59,11 @@ public class LocationUtils {
 
 		List<Path> classFiles = new ArrayList<Path>();
 		
-		Files.find(
-				Paths.get(projectWorkspace), 
-				Integer.MAX_VALUE, 
-				(filePath, fileAttr) -> fileAttr.isRegularFile())
-			.forEach(classFiles::add);
+		FileUtils
+			.listFiles(new File(projectWorkspace), new String[] {"class"}, true)
+			.stream()
+			.forEach(p -> classFiles.add(Paths.get(p.getPath())));
+		classFiles.stream().forEach(c -> log.info(c.toString()));
 		
 		return classFiles;
 	}

@@ -71,6 +71,8 @@ public class LocationUtilsTest {
 		(new File(workspaceTemplate + "/A")).mkdirs();
 		(new File(workspaceTemplate + "/A/A1.class")).createNewFile();
 		
+		(new File(workspaceTemplate + "/A/A1HELLO")).createNewFile();
+		
 		structureList.forEach(dir -> {
 			(new File(dir)).mkdirs();
 		});

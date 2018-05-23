@@ -3,7 +3,6 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.ConstantPushInstruction;
 import org.apache.bcel.generic.EmptyVisitor;
@@ -17,62 +16,40 @@ import org.apache.bcel.generic.InstructionConst;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ReturnInstruction;
-import org.apache.bcel.generic.Type;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import lombok.Getter;
 import lombok.extern.java.Log;
 
 @Log
-public class SourcecodeMethodGraphBuilder extends EmptyVisitor {
+public class MethodStructureAnalysis extends EmptyVisitor {
+	
+	private ConstantPoolGen constants;
 	
 	private MethodGen mg;
-	private ConstantPoolGen constants;
 	
 	private String format;
 	
 	private String interestedPackage;
 	
 	@Getter
-	private List<String> traversalStack;
+	private List<String> structure;
 	
-	public SourcecodeMethodGraphBuilder(MethodGen mg, 
-			JavaClass classname, 
-			GraphTraversalSource g,
-			String interestedPackage) {
-		
+	private MethodStructureAnalysis(MethodGen mg, String classname, String interestedPackage) {
+	
 		this.mg = mg;
 		this.constants = mg.getConstantPool();
 		this.interestedPackage = interestedPackage;
+		this.structure = new ArrayList<String>();
 		
-		traversalStack = new ArrayList<String>();
 		
-		format = "'M:" + classname.getClassName() + "' -> '%s:%s' [label = '" +mg.getName() + ":%s'];";
-		
+		format = "'M:" + classname + "' -> '%s:%s' [label = '" + mg.getName() + ":%s'];";
 	}
 	
-	@SuppressWarnings("unused")
-	private String argumentList(Type[] argumentTypes) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < argumentTypes.length; i++) {
-			if (i != 0) {
-				sb.append(",");
-			}
-			sb.append(argumentTypes[i].toString());
-		}
-		
-		return sb.toString();
-	}
-
-	public static SourcecodeMethodGraphBuilder analyzeForMethod(MethodGen mg, 
-			JavaClass classname, 
-			GraphTraversalSource g,
-			String interestedPackage) {
-		
-		return new SourcecodeMethodGraphBuilder(mg, classname, g, interestedPackage);
+	public static List<String> forClass(MethodGen mg, String classname, String interestedPackage) {
+		return new MethodStructureAnalysis(mg, classname, interestedPackage).analyze().getStructure();
 	}
 	
-	public SourcecodeMethodGraphBuilder start() {
+	public MethodStructureAnalysis analyze() {
 		for (InstructionHandle ih = mg.getInstructionList().getStart(); 
                 ih != null; ih = ih.getNext()) {
             Instruction i = ih.getInstruction();
@@ -133,12 +110,20 @@ public class SourcecodeMethodGraphBuilder extends EmptyVisitor {
         		i.getReferenceType(constants).toString(), 
         		i.getMethodName(constants));
     }
-    
-    /**
-     * Private
-     * @param instructionHandle
-     * @return
-     */
+
+	private void appendMessage(SourcecodeStructureConnectionType type, String referenceType, String method) {
+		if (referenceType.startsWith(interestedPackage) && !"<init>".equals(method)) {
+			
+			String msg = String.format(format, type, referenceType, method);
+			log.info(msg);
+			
+			this.structure.add(msg);
+			
+		} else {
+			log.info("Not interested package: " + referenceType);
+			
+		}
+	}
 
 	private boolean instructionFilter(Instruction i) {
 		short opcode = i.getOpcode();
@@ -146,16 +131,6 @@ public class SourcecodeMethodGraphBuilder extends EmptyVisitor {
         return ((InstructionConst.getInstruction(opcode) != null)
                 && !(i instanceof ConstantPushInstruction) 
                 && !(i instanceof ReturnInstruction));
-	}
-	
-	private void appendMessage(SourcecodeStructureConnectionType type, String referenceType, String method) {
-		if (referenceType.startsWith(interestedPackage) && !"<init>".equals(method)) {
-			String msg = String.format(format, type, referenceType, method);
-			this.traversalStack.add(msg);
-		} else {
-			log.info("Not interested package: " + referenceType);
-			
-		}
 	}
 
 }
