@@ -64,8 +64,6 @@ public class SourceCodeAnalyzerServiceController {
 					branch, 
 					interestedpackage);
 			
-			log.info(graphStructure);
-			
 		} catch (NoGraphToAnalyzeException e) {
 			graphStructure = "No data found";
 			hs = HttpStatus.NO_CONTENT;
