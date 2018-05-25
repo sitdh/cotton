@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
-import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphBuilder;
+import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
@@ -45,7 +45,11 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		try {
 			
 			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
-			digraph = SourceCodeGraphBuilder.analyzedForProject(allClasses, interestedPackage)
+			
+			digraph = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
+					.classListing(allClasses)
+					.interestedPackage(interestedPackage)
+					.build()
 					.analyze()
 					.getDigraph();
 			

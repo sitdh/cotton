@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import com.sitdh.thesis.core.cotton.exception.PackageNotInterestedException;
 
-public class SourceCodeGraphBuilderTest {
+public class SourceCodeGraphAnalysisTest {
 	
 	public static final String PROJECT = "project-slug";
 	
@@ -25,7 +25,7 @@ public class SourceCodeGraphBuilderTest {
 	
 	public static final String INTERESTED_PACKAGE = "com.sitdh.thesis.core.cotton";
 	
-	private SourceCodeGraphBuilder graphBuilder;
+	private SourceCodeGraphAnalysis graphBuilder;
 	
 	@BeforeClass
 	public static void setupEnvironment() {
@@ -36,11 +36,11 @@ public class SourceCodeGraphBuilderTest {
 		
 		String workspaceTemplate = tempdir 
 				+ "/" 
-				+ SourceCodeGraphBuilderTest.PROJECT 
+				+ SourceCodeGraphAnalysisTest.PROJECT 
 				+ "_" 
-				+ SourceCodeGraphBuilderTest.BRANCH 
+				+ SourceCodeGraphAnalysisTest.BRANCH 
 				+ "-" 
-				+ SourceCodeGraphBuilderTest.HASH_STRING;
+				+ SourceCodeGraphAnalysisTest.HASH_STRING;
 		
 		List<String> structureList = Arrays.asList(
 				workspaceTemplate,

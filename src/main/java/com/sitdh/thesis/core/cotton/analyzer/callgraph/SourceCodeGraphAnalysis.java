@@ -13,16 +13,17 @@ import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.EmptyVisitor;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.commons.lang3.StringUtils;
+import org.assertj.core.util.Lists;
 
 import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
-public class SourceCodeGraphBuilder extends EmptyVisitor {
+@Slf4j
+public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	public static final String DIGRAPH_CLASS_TYPE = "class";
 	
@@ -34,7 +35,7 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 	
 	private List<Path> classListing;
 
-	private SourceCodeGraphBuilder(List<Path> classListing, String interestedPackage) throws IOException {
+	public SourceCodeGraphAnalysis(List<Path> classListing, String interestedPackage) throws IOException {
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
@@ -42,11 +43,56 @@ public class SourceCodeGraphBuilder extends EmptyVisitor {
 		
 	}
 	
-	public static SourceCodeGraphBuilder analyzedForProject(List<Path> classListing, String interestedPackage) throws IOException {		
-		return new SourceCodeGraphBuilder(classListing, interestedPackage);
+	
+	/**
+	 * @deprecated
+	 * @param classListing
+	 * @param interestedPackage
+	 * @return
+	 * @throws IOException
+	 */
+	public static SourceCodeGraphAnalysis analyzedForProject(List<Path> classListing, String interestedPackage) throws IOException {		
+		return new SourceCodeGraphAnalysis(classListing, interestedPackage);
 	}
 	
-	public SourceCodeGraphBuilder analyze() throws ClassFormatException, IOException {
+	public static class SourceCodeGraphAnalysisBuilder {
+		
+		private List<Path> classListing;
+		
+		private String interestedPackage;
+		
+		public SourceCodeGraphAnalysisBuilder classListing(List<Path> classListing) {
+			if (null == this.classListing) {
+				this.classListing = Lists.emptyList();
+			}
+			
+			this.classListing.addAll(classListing);
+			
+			return this;
+		}
+		
+		public SourceCodeGraphAnalysisBuilder classPath(Path path) {
+			if (null == this.classListing) {
+				this.classListing = Lists.emptyList();
+			}
+			
+			this.classListing.add(path);
+			
+			return this;
+		}
+		
+		public SourceCodeGraphAnalysisBuilder interestedPackage(String interestedPackage) {
+			this.interestedPackage = interestedPackage;
+			
+			return this;
+		}
+		
+		public SourceCodeGraphAnalysis build() throws IOException {
+			return new SourceCodeGraphAnalysis(classListing, interestedPackage);
+		}
+	}
+	
+	public SourceCodeGraphAnalysis analyze() throws ClassFormatException, IOException {
 		
 		for(Path path : this.classListing) {
 			JavaClass jc = new ClassParser(path.toString()).parse();
