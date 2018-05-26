@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public class SourcecodeMethodGraphBuilder extends EmptyVisitor {
 	
 	private MethodGen mg;
