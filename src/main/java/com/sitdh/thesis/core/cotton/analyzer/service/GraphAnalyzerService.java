@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
+import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +29,14 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	
 	private LocationUtils locationUtil;
 	
+	private ConstantCollectionRepository constantCollectorRepo;
+	
+	private String projectSlug;
+	
 	@Autowired
-	public GraphAnalyzerService(LocationUtils locationUtil) {
+	public GraphAnalyzerService(LocationUtils locationUtil, ConstantCollectionRepository constantCollectorRepository) {
 		this.locationUtil = locationUtil;
+		this.constantCollectorRepo = constantCollectorRepository;
 	}
 	
 	@Override
@@ -41,17 +48,21 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	public String analyzed(String slug, String branch, String interestedPackage) throws NoGraphToAnalyzeException {
 		
 		String digraph = null;
+		projectSlug = slug;
 		
 		try {
 			
 			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
 			
-			digraph = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
+			SourceCodeGraphAnalysis scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
 					.classListing(allClasses)
 					.interestedPackage(interestedPackage)
 					.build()
-					.analyze()
-					.getDigraph();
+					.analyze();
+			
+			scga.getConstantCollector().forEach(this::saveCollectedConstants);
+			
+			digraph = scga.getDigraph();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -72,6 +83,12 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		}
 		
 		return Optional.ofNullable(location);
+	}
+	
+	private void saveCollectedConstants(String key, String value) {
+		ConstantCollection cc = new ConstantCollection(projectSlug, value, key);
+		
+		constantCollectorRepo.save(cc);
 	}
 	
 }

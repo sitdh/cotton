@@ -24,21 +24,19 @@ public class ConstantCollection {
 	@Column(name="constant_id")
 	private Integer constantId;
 	
-	@Getter @Setter
-	@ManyToOne(fetch=FetchType.LAZY)
-	@JoinColumn(name="fileId")
-	private FileName fileName;
+	@Getter @Setter @Column(name="project_id")
+	private String projectId;
 	
 	@Getter @Setter
-	private ConstantType type;
+	private String type;
 	
 	@Getter @Setter
 	private String value;
 	
 	public ConstantCollection() { }
 	
-	public ConstantCollection(String filename, ConstantType type, String value) {
-		this.setFileName(fileName);
+	public ConstantCollection(String projectId, String type, String value) {
+		this.setProjectId(projectId);
 		this.setType(type);
 		this.setValue(value);
 	}

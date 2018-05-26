@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.bcel.classfile.ClassFormatException;
@@ -15,11 +16,13 @@ import org.apache.bcel.classfile.JavaClass;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.Lists;
 
+import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,12 +37,17 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	private List<String> graphStructure;
 	
 	private List<Path> classListing;
+	
+	@Getter
+	private Map<String, String> constantCollector;
 
 	public SourceCodeGraphAnalysis(List<Path> classListing, String interestedPackage) throws IOException {
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
 		this.interestedPackage = interestedPackage;
+		
+		constantCollector = Maps.newHashMap();
 	}
 	
 	
@@ -89,13 +97,16 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		public SourceCodeGraphAnalysis build() throws IOException {
 			return new SourceCodeGraphAnalysis(classListing, interestedPackage);
 		}
+		
 	}
 	
 	public SourceCodeGraphAnalysis analyze() throws ClassFormatException, IOException {
 		
 		for(Path path : this.classListing) {
 			JavaClass jc = new ClassParser(path.toString()).parse();
-			List<String> newGraph = ClassStructureAnalysis.forClass(jc, interestedPackage);
+			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, interestedPackage);
+			List<String> newGraph = csa.getStructure();
+			constantCollector.putAll(csa.getConstantsCollection());
 			graphStructure.addAll(newGraph);
 		}
 		

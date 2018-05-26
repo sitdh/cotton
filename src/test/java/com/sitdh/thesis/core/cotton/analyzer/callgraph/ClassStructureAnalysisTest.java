@@ -9,23 +9,16 @@ import java.util.List;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.JavaClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
 public class ClassStructureAnalysisTest {
 	
-	@Value("${class-loation}")
 	private String location;
 
-	@BeforeClass
-	public static void setupEnvironment() {
-		System.setProperty("class-loation", "/Users/sitdh/workspace/grading/target/classes/com/sitdh/thesis/demo/GradingApplication.class");
+	@Before
+	public void setupEnvironment() {
+		location = "/Users/sitdh/workspace/grading/target/classes/com/sitdh/thesis/demo/GradingApplication.class";
 	}
 
 	@Test
@@ -37,7 +30,7 @@ public class ClassStructureAnalysisTest {
 	@Test
 	public void class_should_extract_structure_from_list() throws ClassFormatException, IOException {
 		JavaClass jc = new ClassParser(location).parse();
-		List<String> structure = ClassStructureAnalysis.forClass(jc, "com.sitdh.thesis.demo");
+		List<String> structure = ClassStructureAnalysis.forClass(jc, "com.sitdh.thesis.demo").getStructure();
 		
 		assertThat(structure.size() > 0, is(true));
 	}

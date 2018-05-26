@@ -41,8 +41,8 @@ public class SourceCodeAnalyzerServiceController {
 		this.headers = headers;
 	}
 	
-	@GetMapping("/code/constant")
-	public ResponseEntity<List<ConstantData>> constantsCollector() {
+	@GetMapping("/code/constant/{slug}")
+	public ResponseEntity<List<ConstantData>> constantsCollector(@PathVariable String slug) {
 		
 		List<ConstantData> data = constantCollector.analyzed();
 		return new ResponseEntity<>(data, headers, HttpStatus.OK);

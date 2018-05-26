@@ -2,6 +2,7 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.bcel.Const;
@@ -14,7 +15,9 @@ import org.apache.bcel.classfile.Visitor;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
 
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.sitdh.thesis.core.cotton.analyzer.data.InterestedConstant;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +35,11 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	private List<String> structure;
 	
 	private String interestedPackage;
+
+	private final List<Byte> interestedFiledInstructions;
+	
+	@Getter
+	private Map<String, String> constantsCollection;
 	
 	public ClassStructureAnalysis(JavaClass jc, String interestedPackage) {
 		this.jc = jc;
@@ -44,6 +52,13 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		this.interestedPackage = interestedPackage;
 		
 		log.debug("Log already constructed");
+		
+		interestedFiledInstructions = Lists.newArrayList(
+				Const.CONSTANT_Class, Const.CONSTANT_Double, 
+				Const.CONSTANT_Float, Const.CONSTANT_Integer,
+				Const.CONSTANT_String);
+		
+		constantsCollection = Maps.newHashMap();
 	}
 	
 	public ClassStructureAnalysis analyze() {
@@ -60,8 +75,8 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		return this;
 	}
 
-	public static List<String> forClass(JavaClass jc, String interestedPackage) {
-		return new ClassStructureAnalysis(jc, interestedPackage).analyze().getStructure();
+	public static ClassStructureAnalysis forClass(JavaClass jc, String interestedPackage) {
+		return new ClassStructureAnalysis(jc, interestedPackage).analyze();
 	}
 	
 	public void visitMethod(Method method) {
@@ -79,30 +94,38 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 			Constant constant = constantPool.getConstant(i);
 			
 			if (!this.isConformedToCondition(Optional.ofNullable(constant))) continue;
+						
+			if (Const.CONSTANT_Class == constant.getTag()) {
+				String referencedClass = constantPool.constantToString(constant);
+				
+				if(!referencedClass.startsWith(interestedPackage)) continue;
+				
+				// Add to format
+				log.info("Get " + constantPool.constantToString(constant));
+				
+				this.structure.add(
+						String.format(
+								graphFormat, 
+								constantPool.constantToString(constant)
+								)
+						);
+			} else {
+				InterestedConstant c = InterestedConstant.getInterestedConstant(constant.getTag());
+				String value = constantPool.constantToString(constant);
+				log.info(String.format("Type: %s, value: %s", c.getType(), value));
+				
+				constantsCollection.put(c.getType(), value);
+			}
 			
-			// TODO: Add visitor here
-			constantPool.accept(this);
-			
-			String referencedClass = constantPool.constantToString(constant);
-			
-			if(!referencedClass.startsWith(interestedPackage)) continue;
-			
-			// Add to format
-			log.info("Get " + constantPool.constantToString(constant));
-			
-			this.structure.add(
-					String.format(
-							graphFormat, 
-							constantPool.constantToString(constant)
-							)
-					);
 		}
 		
 	}
 	
+	
+	
 	private boolean isConformedToCondition(Optional<Constant> constant) {
-		constant.ifPresent(c -> log.info("Constant tag: ", c.getTag()));
-		return constant.isPresent() && Const.CONSTANT_Class == constant.get().getTag();
+		
+		return constant.isPresent() && this.interestedFiledInstructions.contains(constant.get().getTag());
 	}
 
 }
