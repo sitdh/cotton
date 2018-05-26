@@ -2,6 +2,9 @@ package com.sitdh.thesis.core.cotton.analyzer.service.util;
 
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class MethodSubgraphTemplate implements SubgraphTemplate {
 
@@ -14,6 +17,8 @@ public class MethodSubgraphTemplate implements SubgraphTemplate {
 		sb.append("\tlabel = \"Methods\"" + System.lineSeparator());
 		sb.append("\tcolor=blue" + System.lineSeparator());
 		sb.append("}" + System.lineSeparator());
+		
+		log.debug("Template generated: " + sb.toString());
 		
 		return sb.toString();
 	}

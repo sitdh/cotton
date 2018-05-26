@@ -13,9 +13,9 @@ import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
 
 import lombok.Getter;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class ClassStructureAnalysis extends EmptyVisitor {
 	
 	private JavaClass jc;
@@ -38,6 +38,8 @@ public class ClassStructureAnalysis extends EmptyVisitor {
 		structure = new ArrayList<String>();
 		
 		this.interestedPackage = interestedPackage;
+		
+		log.debug("Log already constructed");
 	}
 	
 	public ClassStructureAnalysis analyze() {

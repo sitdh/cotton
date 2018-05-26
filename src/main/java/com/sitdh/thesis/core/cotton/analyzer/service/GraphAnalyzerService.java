@@ -15,9 +15,9 @@ import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 @Service("SimpleGraphAnalyzer")
 @PropertySource("classpath:/graph.properties")
 public class GraphAnalyzerService implements GraphAnalyzer {
@@ -68,7 +68,7 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		try {
 			location = locationUtil.getProjectWorkspace(slug, branch);
 		} catch(FileNotFoundException e) {
-			log.throwing(this.getClass().getName(), "sourceLocation", e);
+			log.error("From source location", e.getClass().getName());
 		}
 		
 		return Optional.ofNullable(location);

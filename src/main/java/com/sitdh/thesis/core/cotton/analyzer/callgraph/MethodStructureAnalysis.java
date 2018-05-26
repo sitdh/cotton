@@ -18,9 +18,9 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ReturnInstruction;
 
 import lombok.Getter;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class MethodStructureAnalysis extends EmptyVisitor {
 	
 	private ConstantPoolGen constants;

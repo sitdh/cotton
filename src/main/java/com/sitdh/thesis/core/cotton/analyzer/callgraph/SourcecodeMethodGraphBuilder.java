@@ -21,9 +21,9 @@ import org.apache.bcel.generic.Type;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import lombok.Getter;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class SourcecodeMethodGraphBuilder extends EmptyVisitor {
 	
 	private MethodGen mg;

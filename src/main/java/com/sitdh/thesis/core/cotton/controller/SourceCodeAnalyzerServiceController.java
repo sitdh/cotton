@@ -19,9 +19,9 @@ import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 @RestController
 public class SourceCodeAnalyzerServiceController {
 	
