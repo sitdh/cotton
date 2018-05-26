@@ -25,7 +25,7 @@ public class ClassStructureAnalysisTest {
 
 	@BeforeClass
 	public static void setupEnvironment() {
-		System.setProperty("class-loation", "/Users/sitdh/workspace/cotton/src/test/resources/grading/target/classes/com/sitdh/thesis/demo/GradingApplication.class");
+		System.setProperty("class-loation", "/Users/sitdh/workspace/grading/target/classes/com/sitdh/thesis/demo/GradingApplication.class");
 	}
 
 	@Test

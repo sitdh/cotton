@@ -40,7 +40,6 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
 		this.interestedPackage = interestedPackage;
-		
 	}
 	
 	

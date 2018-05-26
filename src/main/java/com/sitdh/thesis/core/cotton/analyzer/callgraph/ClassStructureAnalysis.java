@@ -4,19 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Constant;
 import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.EmptyVisitor;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
+import org.apache.bcel.classfile.Visitor;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
+
+
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ClassStructureAnalysis extends EmptyVisitor {
+public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	
 	private JavaClass jc;
 	
@@ -76,6 +80,9 @@ public class ClassStructureAnalysis extends EmptyVisitor {
 			
 			if (!this.isConformedToCondition(Optional.ofNullable(constant))) continue;
 			
+			// TODO: Add visitor here
+			constantPool.accept(this);
+			
 			String referencedClass = constantPool.constantToString(constant);
 			
 			if(!referencedClass.startsWith(interestedPackage)) continue;
@@ -94,7 +101,8 @@ public class ClassStructureAnalysis extends EmptyVisitor {
 	}
 	
 	private boolean isConformedToCondition(Optional<Constant> constant) {
-		return constant.isPresent() && 7 == constant.get().getTag();
+		constant.ifPresent(c -> log.info("Constant tag: ", c.getTag()));
+		return constant.isPresent() && Const.CONSTANT_Class == constant.get().getTag();
 	}
 
 }

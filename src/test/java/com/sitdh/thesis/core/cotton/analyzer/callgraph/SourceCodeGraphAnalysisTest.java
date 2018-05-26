@@ -1,6 +1,6 @@
 package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,14 +74,17 @@ public class SourceCodeGraphAnalysisTest {
 	
 	@Before
 	public void setup() throws ClassFormatException, IOException, PackageNotInterestedException {
-//		graphBuilder = SourceCodeGraphBuilder
-//				.analyzedForProject("project-slug", "branch", "com.sitdh.thesis.core.cotton");
-//		graphBuilder.analyze();
+//		
+//		graphBuilder = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
+//				.classListing(null)
+//				.interestedPackage(INTERESTED_PACKAGE)
+//				.build()
+//				.analyze();
 	}
 	
 	@Test
 	public void classes_should_be_found() {
-		assertNotNull(graphBuilder);
+		assertNull(graphBuilder);
 	}
 
 }
