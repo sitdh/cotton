@@ -93,7 +93,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 			Constant constant = constantPool.getConstant(i);
 			
 			if (!this.isConformedToCondition(Optional.ofNullable(constant))) continue;
-						
+			
 			if (Const.CONSTANT_Class == constant.getTag()) {
 				String referencedClass = constantPool.constantToString(constant);
 				
@@ -104,7 +104,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				
 				this.structure.add(
 						String.format(
-								graphFormat, 
+								graphFormat,
 								constantPool.constantToString(constant)
 								)
 						);

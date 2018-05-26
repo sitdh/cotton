@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -92,7 +93,7 @@ public class SourceCodeAnalyzerServiceControllerTest {
 	public void should_return_graph_structure_directly_from_controller() throws NoGraphToAnalyzeException {
 		when(graphAnalyzer.analyzed(anyString(), anyString(), anyString())).thenReturn("digraph G { subgraph {} }");
 		
-		ResponseEntity<String> response = srcAnalyzer.analyzeSourcecodeForGraph("fibre-tax-income", "master", "com.sitdh.thesis.example");
+		ResponseEntity<Map<String, String>> response = srcAnalyzer.analyzeSourcecodeForGraph("fibre-tax-income", "master", "com.sitdh.thesis.example");
 		
 		assertNotNull(response.getBody());
 		assertThat(response.getStatusCode(), is(HttpStatus.OK));

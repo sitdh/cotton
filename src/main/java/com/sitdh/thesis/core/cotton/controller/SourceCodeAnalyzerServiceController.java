@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,29 +62,24 @@ public class SourceCodeAnalyzerServiceController {
 	}
 
 	@GetMapping("/code/graph/{slug}/{branch}")
-	public @ResponseBody ResponseEntity<String> analyzeSourcecodeForGraph(@PathVariable String slug, @PathVariable String branch, @RequestParam("p") String interestedpackage) {
+	public @ResponseBody ResponseEntity<Map<String, String>> analyzeSourcecodeForGraph(
+			@PathVariable String slug, 
+			@PathVariable String branch, 
+			@RequestParam("p") String interestedpackage) throws NoGraphToAnalyzeException {
 		
-		String graphStructure;
+		Map<String, String> graphStructure;
 		
 		HttpHeaders h = headers;
 		HttpStatus hs = HttpStatus.OK;
 		
 		log.info("Package: " + interestedpackage);
 		
-		try {
-			this.constantRepo.deleteAll();
-			
-			graphStructure = graphAnalyzer.analyzed(
-					slug, 
-					branch, 
-					interestedpackage);
-			
-		} catch (NoGraphToAnalyzeException e) {
-			graphStructure = "No data found";
-			hs = HttpStatus.NO_CONTENT;
-			h.setContentType(MediaType.TEXT_PLAIN);
-			
-		}
+		this.constantRepo.deleteAll();
+		
+		graphStructure = graphAnalyzer.analyzedStructure(
+				slug, 
+				branch, 
+				interestedpackage);
 		
 		return  new ResponseEntity<>(graphStructure, h, hs);
 	}

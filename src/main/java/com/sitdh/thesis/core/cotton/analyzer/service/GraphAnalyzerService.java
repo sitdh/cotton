@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 			
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
 			
-			digraph = scga.getDigraph();
+//			digraph = scga.getDigraph();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -70,6 +71,32 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		}
 		
 		return digraph;
+	}
+	
+	public Map<String, String> analyzedStructure(String slug, String branch, String interestedPackage) throws NoGraphToAnalyzeException {
+		SourceCodeGraphAnalysis scga = null;
+		
+		projectSlug = slug;
+		
+		try {
+			
+			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
+			
+			scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
+					.classListing(allClasses)
+					.interestedPackage(interestedPackage)
+					.build()
+					.analyze();
+				
+			scga.getConstantCollector().forEach(this::saveCollectedConstants);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+			log.error(e.getMessage());
+		}
+		
+		return scga.getGraphs();
 	}
 
 	@Override

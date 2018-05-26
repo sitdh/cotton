@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.bcel.classfile.ClassFormatException;
@@ -15,8 +16,10 @@ import org.apache.bcel.classfile.JavaClass;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
+import com.sitdh.thesis.core.cotton.analyzer.service.util.PlainGraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
@@ -29,7 +32,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	public static final String DIGRAPH_CLASS_TYPE = "class";
 	
-	public static final String DIGRAPH_METHOD_TYPE = "methods";
+	public static final String DIGRAPH_METHOD_TYPE = "method";
 	
 	private String interestedPackage;
 	
@@ -112,16 +115,50 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		return this;
 	}
 	
+	/**
+	 * @deprecated
+	 * @return
+	 * @throws NoGraphToAnalyzeException
+	 */
 	public String getDigraph() throws NoGraphToAnalyzeException {
 		return this.getShortname(
 				this.convertToDigraph(graphStructure)
 				);
 	}
 	
+	public Map<String, String> getGraphs() throws NoGraphToAnalyzeException {
+		List<String> graph = null;
+		Map<String, String> graphs = Maps.newHashMap();
+		
+		graph = graphStructure.stream()
+				.filter(g -> g.startsWith("\"C:"))
+				.filter(this::filterLeftEqualRight)
+				.collect(Collectors.toList());
+		String convertedGraph = this.convertToDotFile("Classes", graph);
+		graphs.put(DIGRAPH_CLASS_TYPE, this.getShortname(convertedGraph));
+		log.debug("Clases were converted to : ", this.getShortname(convertedGraph));
+		
+	
+		graph = graphStructure.stream()
+				.filter(g -> !g.startsWith("\"C:"))
+				.collect(Collectors.toList());
+		convertedGraph = this.convertToDotFile("Method", graph);
+		graphs.put(DIGRAPH_METHOD_TYPE, this.getShortname(convertedGraph));
+		log.debug("Methods were converted to ", this.getShortname(convertedGraph));
+		
+		return graphs;
+	}
+	
 	private String getShortname(String className) {
 		return StringUtils.replaceAll(className, interestedPackage, "*");
 	}
 	
+	/**
+	 * @deprecated
+	 * @param graph
+	 * @return
+	 * @throws NoGraphToAnalyzeException
+	 */
 	private String convertToDigraph(List<String> graph) throws NoGraphToAnalyzeException {
 		
 		if (graph.size() == 0) {
@@ -140,11 +177,31 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("digraph G {" + System.lineSeparator());
-		sb.append("\trankdir=LR" + System.lineSeparator() + System.lineSeparator());
+		sb.append("\trankdir=LR; " + System.lineSeparator() + System.lineSeparator());
 		
 		sb.append(this.convertedSubgraph(classGraph, new ClassSubgraphTemplate(), "0"));
 		
 		sb.append(this.convertedSubgraph(methodGraph, new MethodSubgraphTemplate(),"1"));
+		
+		sb.append("}");
+		
+		return sb.toString();
+	}
+	
+	private String convertToDotFile(String graphName, List<String> graph) throws NoGraphToAnalyzeException {
+		if (graph.size() == 0) {
+			throw new NoGraphToAnalyzeException();
+		}
+		
+		SubgraphTemplate plainGraphTemplate = new PlainGraphTemplate();
+		
+		graph = new ArrayList<>(new HashSet<>(graph));
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("digraph " + graphName + " {" + System.lineSeparator());
+		sb.append("\trankdir=LR; " + System.lineSeparator() + System.lineSeparator());
+		
+		sb.append(this.convertedSubgraph(graph, plainGraphTemplate, graphName));
 		
 		sb.append("}");
 		
@@ -167,6 +224,11 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	private String convertedSubgraph(List<String> g, SubgraphTemplate template, String title) {
 		return g.size() > 0 ? this.convertToSubgraph(g, title, template) : "\n" ;
+	}
+	
+	private boolean filterLeftEqualRight(String graph) {
+		String[] str = graph.trim().split(" -> ");
+		return !(str[0] + ";").equals(str[1]);
 	}
 
 }
