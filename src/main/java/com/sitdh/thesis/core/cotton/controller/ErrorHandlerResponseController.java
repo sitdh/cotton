@@ -14,18 +14,17 @@ import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ControllerAdvice
+//@ControllerAdvice
 public class ErrorHandlerResponseController extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(value = {Exception.class, NoGraphToAnalyzeException.class})
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ResponseEntity<Object> handleConflict(RuntimeException ex, WebRequest request) {
 		
-		log.error("Entering: handleConflict");
-		
+		log.error("Entering handleConflict", ex.getMessage());
 		return this.handleExceptionInternal(
 				ex, 
-				ex.getMessage(), 
+				"Not found", 
 				new HttpHeaders(), 
 				HttpStatus.CONFLICT, 
 				request);

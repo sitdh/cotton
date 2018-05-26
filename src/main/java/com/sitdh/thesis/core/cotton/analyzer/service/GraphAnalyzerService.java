@@ -85,10 +85,11 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		return Optional.ofNullable(location);
 	}
 	
-	private void saveCollectedConstants(String key, String value) {
-		ConstantCollection cc = new ConstantCollection(projectSlug, value, key);
-		
+	private void saveCollectedConstants(ConstantCollection cc) {
+		cc.setProjectId(projectSlug);
 		constantCollectorRepo.save(cc);
+		
+		log.debug("Found", cc.getValue(), " => ", cc.getType(), "and save to project ", projectSlug);
 	}
 	
 }

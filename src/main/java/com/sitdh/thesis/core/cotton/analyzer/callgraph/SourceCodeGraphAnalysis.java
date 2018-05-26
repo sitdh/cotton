@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.bcel.classfile.ClassFormatException;
@@ -14,12 +13,12 @@ import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.EmptyVisitor;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.util.Lists;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
+import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.Getter;
@@ -39,7 +38,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	private List<Path> classListing;
 	
 	@Getter
-	private Map<String, String> constantCollector;
+	private List<ConstantCollection> constantCollector;
 
 	public SourceCodeGraphAnalysis(List<Path> classListing, String interestedPackage) throws IOException {
 		log.info("Object create");
@@ -47,7 +46,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		graphStructure = new ArrayList<String>();
 		this.interestedPackage = interestedPackage;
 		
-		constantCollector = Maps.newHashMap();
+		constantCollector = Lists.newArrayList();
 	}
 	
 	
@@ -70,7 +69,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		
 		public SourceCodeGraphAnalysisBuilder classListing(List<Path> classListing) {
 			if (null == this.classListing) {
-				this.classListing = Lists.emptyList();
+				this.classListing = new ArrayList<>();
 			}
 			
 			this.classListing.addAll(classListing);
@@ -80,7 +79,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		
 		public SourceCodeGraphAnalysisBuilder classPath(Path path) {
 			if (null == this.classListing) {
-				this.classListing = Lists.emptyList();
+				this.classListing = new ArrayList<>();
 			}
 			
 			this.classListing.add(path);
@@ -106,7 +105,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 			JavaClass jc = new ClassParser(path.toString()).parse();
 			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, interestedPackage);
 			List<String> newGraph = csa.getStructure();
-			constantCollector.putAll(csa.getConstantsCollection());
+			constantCollector.addAll(csa.getConstantsCollection());
 			graphStructure.addAll(newGraph);
 		}
 		

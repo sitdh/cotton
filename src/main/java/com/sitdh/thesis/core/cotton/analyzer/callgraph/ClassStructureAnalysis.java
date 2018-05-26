@@ -2,7 +2,6 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.bcel.Const;
@@ -16,8 +15,8 @@ import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.data.InterestedConstant;
+import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	private final List<Byte> interestedFiledInstructions;
 	
 	@Getter
-	private Map<String, String> constantsCollection;
+	private List<ConstantCollection> constantsCollection;
 	
 	public ClassStructureAnalysis(JavaClass jc, String interestedPackage) {
 		this.jc = jc;
@@ -58,7 +57,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				Const.CONSTANT_Float, Const.CONSTANT_Integer,
 				Const.CONSTANT_String);
 		
-		constantsCollection = Maps.newHashMap();
+		constantsCollection = Lists.newArrayList();
 	}
 	
 	public ClassStructureAnalysis analyze() {
@@ -111,10 +110,10 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 						);
 			} else {
 				InterestedConstant c = InterestedConstant.getInterestedConstant(constant.getTag());
-				String value = constantPool.constantToString(constant);
+				String value = constantPool.constantToString(constant).replaceAll("\"", "");
 				log.info(String.format("Type: %s, value: %s", c.getType(), value));
 				
-				constantsCollection.put(c.getType(), value);
+				constantsCollection.add(new ConstantCollection("", c.getType(), value));
 			}
 			
 		}
@@ -125,7 +124,10 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	
 	private boolean isConformedToCondition(Optional<Constant> constant) {
 		
-		return constant.isPresent() && this.interestedFiledInstructions.contains(constant.get().getTag());
+		return constant.isPresent() 
+				&& this.interestedFiledInstructions.contains(
+						constant.get().getTag()
+					);
 	}
 
 }

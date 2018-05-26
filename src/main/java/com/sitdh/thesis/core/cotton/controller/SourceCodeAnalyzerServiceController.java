@@ -1,6 +1,8 @@
 package com.sitdh.thesis.core.cotton.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,9 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sitdh.thesis.core.cotton.analyzer.data.ConstantData;
 import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
+import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,17 +38,28 @@ public class SourceCodeAnalyzerServiceController {
 	@Qualifier("SimpleGraphAnalyzer")
 	private GraphAnalyzer graphAnalyzer;
 	
+	private ConstantCollectionRepository constantRepo;
+	
 	@Autowired
-	public SourceCodeAnalyzerServiceController(HttpHeaders headers) {
+	public SourceCodeAnalyzerServiceController(HttpHeaders headers, ConstantCollectionRepository constantRepo) {
 		log.info("Constructor reached");
 		this.headers = headers;
+		this.constantRepo = constantRepo;
 	}
 	
 	@GetMapping("/code/constant/{slug}")
-	public ResponseEntity<List<ConstantData>> constantsCollector(@PathVariable String slug) {
+	public ResponseEntity<Map<String, List<String>>> constantsCollector(@PathVariable String slug) {
 		
-		List<ConstantData> data = constantCollector.analyzed();
-		return new ResponseEntity<>(data, headers, HttpStatus.OK);
+		List<ConstantCollection> cc = this.constantRepo.findByProjectId(slug);
+		Map<String, List<String>> groupedConstants = cc.stream().collect(
+				Collectors.groupingBy(
+						ConstantCollection::getType, 
+						Collectors.mapping(ConstantCollection::getValue, Collectors.toList()))
+				);
+		
+		HttpStatus hs = groupedConstants.isEmpty() ? HttpStatus.NO_CONTENT : HttpStatus.OK ;
+		
+		return new ResponseEntity<>(groupedConstants, headers, hs);
 	}
 
 	@GetMapping("/code/graph/{slug}/{branch}")
@@ -59,6 +73,8 @@ public class SourceCodeAnalyzerServiceController {
 		log.info("Package: " + interestedpackage);
 		
 		try {
+			this.constantRepo.deleteAll();
+			
 			graphStructure = graphAnalyzer.analyzed(
 					slug, 
 					branch, 
