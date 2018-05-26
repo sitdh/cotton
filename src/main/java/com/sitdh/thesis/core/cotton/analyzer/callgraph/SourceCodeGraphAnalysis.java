@@ -17,8 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sitdh.thesis.core.cotton.analyzer.service.util.ClassSubgraphTemplate;
-import com.sitdh.thesis.core.cotton.analyzer.service.util.MethodSubgraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.PlainGraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
@@ -50,18 +48,6 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		this.interestedPackage = interestedPackage;
 		
 		constantCollector = Lists.newArrayList();
-	}
-	
-	
-	/**
-	 * @deprecated
-	 * @param classListing
-	 * @param interestedPackage
-	 * @return
-	 * @throws IOException
-	 */
-	public static SourceCodeGraphAnalysis analyzedForProject(List<Path> classListing, String interestedPackage) throws IOException {		
-		return new SourceCodeGraphAnalysis(classListing, interestedPackage);
 	}
 	
 	public static class SourceCodeGraphAnalysisBuilder {
@@ -115,17 +101,6 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		return this;
 	}
 	
-	/**
-	 * @deprecated
-	 * @return
-	 * @throws NoGraphToAnalyzeException
-	 */
-	public String getDigraph() throws NoGraphToAnalyzeException {
-		return this.getShortname(
-				this.convertToDigraph(graphStructure)
-				);
-	}
-	
 	public Map<String, String> getGraphs() throws NoGraphToAnalyzeException {
 		List<String> graph = null;
 		Map<String, String> graphs = Maps.newHashMap();
@@ -151,41 +126,6 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	private String getShortname(String className) {
 		return StringUtils.replaceAll(className, interestedPackage, "*");
-	}
-	
-	/**
-	 * @deprecated
-	 * @param graph
-	 * @return
-	 * @throws NoGraphToAnalyzeException
-	 */
-	private String convertToDigraph(List<String> graph) throws NoGraphToAnalyzeException {
-		
-		if (graph.size() == 0) {
-			throw new NoGraphToAnalyzeException();
-		}
-		
-		graph = new ArrayList<>(new HashSet<>(graph));
-		
-		List<String> classGraph = graph.stream()
-				.filter(g -> g.startsWith("\"C:"))
-				.collect(Collectors.toList());
-		
-		List<String> methodGraph = graph.stream()
-				.filter(g -> !g.startsWith("\"C:"))
-				.collect(Collectors.toList());
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("digraph G {" + System.lineSeparator());
-		sb.append("\trankdir=LR; " + System.lineSeparator() + System.lineSeparator());
-		
-		sb.append(this.convertedSubgraph(classGraph, new ClassSubgraphTemplate(), "0"));
-		
-		sb.append(this.convertedSubgraph(methodGraph, new MethodSubgraphTemplate(),"1"));
-		
-		sb.append("}");
-		
-		return sb.toString();
 	}
 	
 	private String convertToDotFile(String graphName, List<String> graph) throws NoGraphToAnalyzeException {

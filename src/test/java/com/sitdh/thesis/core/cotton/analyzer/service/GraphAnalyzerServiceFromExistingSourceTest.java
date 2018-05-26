@@ -3,6 +3,8 @@ package com.sitdh.thesis.core.cotton.analyzer.service;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
+import java.util.Map;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +33,7 @@ public class GraphAnalyzerServiceFromExistingSourceTest {
 	@Test
 	public void should_extract_real_class_data() throws NoGraphToAnalyzeException {
 		
-		String location = graphAnalyzer.analyzed("fibre-tax-income", "master", "com.sitdh.thesis.example");
+		Map<String, String> location = graphAnalyzer.analyzedStructure("fibre-tax-income", "master", "com.sitdh.thesis.example");
 		assertThat(!location.isEmpty(), is(true));
 		System.out.println(location);
 	}
