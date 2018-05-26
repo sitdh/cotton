@@ -27,6 +27,7 @@
 		<bcel.version>6.2</bcel.version>
 		<javaassist.version>3.22.0-GA</javaassist.version>
 		<evosuite.version>1.0.6</evosuite.version>
+		<derbyclient.version>10.14.2.0</derbyclient.version>
 	</properties>
 
 	<dependencies>
@@ -66,9 +67,9 @@
 
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
-		    <groupId>com.google.guava</groupId>
-		    <artifactId>guava</artifactId>
-		    <version>25.0-jre</version>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>25.0-jre</version>
 		</dependency>
 
 		<!-- End Call Graph Tools -->
@@ -97,7 +98,7 @@
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.evosuite</groupId>
 			<artifactId>evosuite-standalone-runtime</artifactId>
@@ -111,7 +112,7 @@
 			<artifactId>gremlin-core</artifactId>
 			<version>${tinkerpop.version}</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/org.apache.tinkerpop/gremlin-archetype-tinkergraph -->
 		<dependency>
 			<groupId>org.apache.tinkerpop</groupId>
@@ -121,13 +122,19 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
 		<dependency>
-		    <groupId>org.apache.commons</groupId>
-		    <artifactId>commons-lang3</artifactId>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
-		    <groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-api</artifactId>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mockito/mockito-all -->
 		<dependency>
@@ -142,6 +149,13 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.derby/derby -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
