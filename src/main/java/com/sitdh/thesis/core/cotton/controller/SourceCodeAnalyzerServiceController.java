@@ -2,8 +2,11 @@ package com.sitdh.thesis.core.cotton.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.evosuite.shaded.org.hsqldb.lib.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -15,11 +18,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
+import com.sitdh.thesis.core.cotton.database.repository.ProjectRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
+import com.sitdh.thesis.core.cotton.service.entity.ConstantPackage;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,17 +47,23 @@ public class SourceCodeAnalyzerServiceController {
 	private GraphAnalyzer graphAnalyzer;
 	
 	private ConstantCollectionRepository constantRepo;
+	private ProjectRepository projectRepo;
 	
 	@Autowired
-	public SourceCodeAnalyzerServiceController(HttpHeaders headers, ConstantCollectionRepository constantRepo) {
+	public SourceCodeAnalyzerServiceController(
+			HttpHeaders headers, 
+			ConstantCollectionRepository constantRepo,
+			ProjectRepository projectRepo) {
+		
 		log.info("Constructor reached");
 		this.headers = headers;
 		this.constantRepo = constantRepo;
+		this.projectRepo = projectRepo;
 	}
 	
 	@GetMapping("/code/constant/{slug}")
-	public ResponseEntity<Map<String, List<String>>> constantsCollector(@PathVariable String slug) {
-		
+	public ResponseEntity<List<ConstantPackage>> constantsCollector(@PathVariable String slug) {
+		List<ConstantPackage> cps = Lists.newArrayList();
 		List<ConstantCollection> cc = this.constantRepo.findByProjectId(slug);
 		Map<String, List<String>> groupedConstants = cc.stream().collect(
 				Collectors.groupingBy(
@@ -56,30 +71,49 @@ public class SourceCodeAnalyzerServiceController {
 						Collectors.mapping(ConstantCollection::getValue, Collectors.toList()))
 				);
 		
+		groupedConstants.forEach((k, v) -> {
+			cps.add(new ConstantPackage(StringUtils.capitalize(k), v));
+		});
+		
 		HttpStatus hs = groupedConstants.isEmpty() ? HttpStatus.NO_CONTENT : HttpStatus.OK ;
 		
-		return new ResponseEntity<>(groupedConstants, headers, hs);
+		return new ResponseEntity<>(cps, headers, hs);
 	}
 
 	@GetMapping("/code/graph/{slug}/{branch}")
 	public @ResponseBody ResponseEntity<Map<String, String>> analyzeSourcecodeForGraph(
 			@PathVariable String slug, 
 			@PathVariable String branch, 
-			@RequestParam("p") String interestedpackage) throws NoGraphToAnalyzeException {
+			@RequestParam("p") String interestedpackage,
+			@RequestParam("update") Optional<Boolean> isUpdate) throws NoGraphToAnalyzeException {
 		
-		Map<String, String> graphStructure;
-		
+		Optional<Project> project = projectRepo.findById(slug);
+		Map<String, String> graphStructure = Maps.newHashMap();
 		HttpHeaders h = headers;
 		HttpStatus hs = HttpStatus.OK;
 		
-		log.info("Package: " + interestedpackage);
+		boolean update = isUpdate.orElse(false);
 		
-		this.constantRepo.deleteAll();
+		if (project.isPresent() && !update) {
+			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE, project.get().getGraphClass());
+			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE, project.get().getGraphMethod());
+		} else {
+			log.info("Package: " + interestedpackage);
+			
+			this.constantRepo.deleteAll();
+			
+			graphStructure = graphAnalyzer.analyzedStructure(
+					slug, 
+					branch, 
+					interestedpackage);
+			
+			Project p = new Project(slug);
+			p.setGraphClass(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE));
+			p.setGraphMethod(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE));
+			
+			projectRepo.save(p);
+		}
 		
-		graphStructure = graphAnalyzer.analyzedStructure(
-				slug, 
-				branch, 
-				interestedpackage);
 		
 		return  new ResponseEntity<>(graphStructure, h, hs);
 	}
