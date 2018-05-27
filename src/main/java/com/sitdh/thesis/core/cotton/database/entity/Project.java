@@ -27,6 +27,14 @@ public class Project {
 	private String owner;
 	
 	@Getter @Setter
+	@Column(length=50)
+	private String branch;
+	
+	@Getter @Setter
+	@Column(name="interested_package", length=50)
+	private String interestedPackage;
+	
+	@Getter @Setter
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="container")
 	private List<FileName> files;
 	
@@ -46,5 +54,11 @@ public class Project {
 	
 	public Project(String projectId) {
 		this.setProjectId(projectId);
+	}
+	
+	public Project(String projectId, String branch, String interestedPackage) {
+		this.setProjectId(projectId);
+		this.setBranch(branch);
+		this.setInterestedPackage(interestedPackage);
 	}
 }

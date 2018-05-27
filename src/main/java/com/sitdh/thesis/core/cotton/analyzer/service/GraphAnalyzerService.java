@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
+import com.sitdh.thesis.core.cotton.database.repository.ControlFlowGraphRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +34,18 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	
 	private ConstantCollectionRepository constantCollectorRepo;
 	
+	private ControlFlowGraphRepository cfgRepo;
+	
 	private String projectSlug;
 	
 	@Autowired
-	public GraphAnalyzerService(LocationUtils locationUtil, ConstantCollectionRepository constantCollectorRepository) {
+	public GraphAnalyzerService(LocationUtils locationUtil, 
+			ConstantCollectionRepository constantCollectorRepository,
+			ControlFlowGraphRepository cfgRepo) {
+		
 		this.locationUtil = locationUtil;
 		this.constantCollectorRepo = constantCollectorRepository;
+		this.cfgRepo = cfgRepo;
 	}
 	
 	@Override
@@ -57,13 +65,10 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 			
 			SourceCodeGraphAnalysis scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
 					.classListing(allClasses)
-					.interestedPackage(interestedPackage)
 					.build()
 					.analyze();
 			
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
-			
-//			digraph = scga.getDigraph();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -73,22 +78,24 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		return digraph;
 	}
 	
-	public Map<String, String> analyzedStructure(String slug, String branch, String interestedPackage) throws NoGraphToAnalyzeException {
+	public Map<String, String> analyzedStructure(Project p) throws NoGraphToAnalyzeException {
 		SourceCodeGraphAnalysis scga = null;
 		
-		projectSlug = slug;
+		projectSlug = p.getProjectId();
 		
 		try {
 			
-			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
+			List<Path> allClasses = this.locationUtil.listClassFiles(p.getProjectId(), p.getBranch());
 			
 			scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
 					.classListing(allClasses)
-					.interestedPackage(interestedPackage)
-					.build()
-					.analyze();
+					.project(p)
+					.build();
+			scga.analyze();
 				
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
+			
+			this.cfgRepo.saveAll(scga.getControlFlowGraphs());
 			
 		} catch (IOException e) {
 			e.printStackTrace();

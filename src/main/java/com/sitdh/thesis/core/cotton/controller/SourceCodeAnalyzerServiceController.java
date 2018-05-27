@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.evosuite.shaded.org.hsqldb.lib.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +25,7 @@ import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
+import com.sitdh.thesis.core.cotton.database.repository.ControlFlowGraphRepository;
 import com.sitdh.thesis.core.cotton.database.repository.ProjectRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 import com.sitdh.thesis.core.cotton.service.entity.ConstantPackage;
@@ -47,13 +47,15 @@ public class SourceCodeAnalyzerServiceController {
 	private GraphAnalyzer graphAnalyzer;
 	
 	private ConstantCollectionRepository constantRepo;
+	private ControlFlowGraphRepository cfgRepo;
 	private ProjectRepository projectRepo;
 	
 	@Autowired
 	public SourceCodeAnalyzerServiceController(
 			HttpHeaders headers, 
 			ConstantCollectionRepository constantRepo,
-			ProjectRepository projectRepo) {
+			ProjectRepository projectRepo,
+			ControlFlowGraphRepository cfgRepo) {
 		
 		log.info("Constructor reached");
 		this.headers = headers;
@@ -87,31 +89,38 @@ public class SourceCodeAnalyzerServiceController {
 			@RequestParam("p") String interestedpackage,
 			@RequestParam("update") Optional<Boolean> isUpdate) throws NoGraphToAnalyzeException {
 		
-		Optional<Project> project = projectRepo.findById(slug);
+		Project project = projectRepo.findById(slug)
+				.filter(p -> p.getBranch().equals(branch))
+				.filter(p -> p.getInterestedPackage().equals(interestedpackage))
+				.orElseGet(Project::new);
+		
+		project.setProjectId(slug);
+		project.setBranch(branch);
+		project.setInterestedPackage(interestedpackage);
+		
 		Map<String, String> graphStructure = Maps.newHashMap();
+		
 		HttpHeaders h = headers;
 		HttpStatus hs = HttpStatus.OK;
 		
 		boolean update = isUpdate.orElse(false);
 		
-		if (project.isPresent() && !update) {
-			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE, project.get().getGraphClass());
-			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE, project.get().getGraphMethod());
-		} else {
+		if (StringUtils.isBlank(project.getGraphClass()) || StringUtils.isBlank(project.getGraphMethod()) || update) {
 			log.info("Package: " + interestedpackage);
 			
 			this.constantRepo.deleteAll();
+			this.cfgRepo.deleteAll();
 			
-			graphStructure = graphAnalyzer.analyzedStructure(
-					slug, 
-					branch, 
-					interestedpackage);
+			graphStructure = graphAnalyzer.analyzedStructure(project);
 			
-			Project p = new Project(slug);
-			p.setGraphClass(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE));
-			p.setGraphMethod(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE));
+			project.setGraphClass(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE));
+			project.setGraphMethod(graphStructure.get(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE));
 			
-			projectRepo.save(p);
+			projectRepo.save(project);
+			
+		} else {
+			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_CLASS_TYPE, project.getGraphClass());
+			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE, project.getGraphMethod());
 		}
 		
 		

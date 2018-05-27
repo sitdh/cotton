@@ -17,6 +17,8 @@ import org.apache.bcel.generic.MethodGen;
 import com.google.common.collect.Lists;
 import com.sitdh.thesis.core.cotton.analyzer.data.InterestedConstant;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,23 +26,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	
+	@Getter
+	private List<ConstantCollection> constantsCollection;
+	
+	@Getter
+	private List<String> structure;
+	
 	private JavaClass jc;
 	
 	private ConstantPoolGen constants;
 	
 	private String graphFormat;
-	
-	@Getter
-	private List<String> structure;
-	
-	private String interestedPackage;
 
 	private final List<Byte> interestedFiledInstructions;
 	
 	@Getter
-	private List<ConstantCollection> constantsCollection;
+	private List<ControlFlowGraph> controlFlowGraphs;
 	
-	public ClassStructureAnalysis(JavaClass jc, String interestedPackage) {
+	private Project project;
+	
+	public ClassStructureAnalysis(JavaClass jc, Project project) {
 		this.jc = jc;
 		constants = new ConstantPoolGen(jc.getConstantPool());
 		
@@ -48,7 +53,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		structure = new ArrayList<String>();
 		
-		this.interestedPackage = interestedPackage;
+		this.project = project;
 		
 		log.debug("Log already constructed");
 		
@@ -58,12 +63,14 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				Const.CONSTANT_String);
 		
 		constantsCollection = Lists.newArrayList();
+		controlFlowGraphs = Lists.newArrayList();
 	}
 	
 	public ClassStructureAnalysis analyze() {
 		
 		jc.getConstantPool().accept(this);
 		log.info("Accept class: " + jc.getClassName());
+		log.info("For Project: " + project.getProjectId());
 		
 		Method[] methods = jc.getMethods();
 		for(int i = 0; i < methods.length; i++) {
@@ -74,8 +81,8 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		return this;
 	}
 
-	public static ClassStructureAnalysis forClass(JavaClass jc, String interestedPackage) {
-		return new ClassStructureAnalysis(jc, interestedPackage).analyze();
+	public static ClassStructureAnalysis forClass(JavaClass jc, Project project) {
+		return new ClassStructureAnalysis(jc, project);
 	}
 	
 	public void visitMethod(Method method) {
@@ -83,9 +90,10 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		if (mg.isAbstract() || mg.isNative()) return;
 		
-		List<String> g = MethodStructureAnalysis.forClass(mg, jc.getClassName(), interestedPackage);
+		MethodStructureAnalysis msa = MethodStructureAnalysis.forClass(mg, jc, project).analyze();
 		
-		structure.addAll(g);
+		structure.addAll(msa.getStructure());
+		controlFlowGraphs.addAll(msa.getClassControlFlowGraph());
 	}
 	
 	public void visitConstantPool(ConstantPool constantPool) {
@@ -97,7 +105,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 			if (Const.CONSTANT_Class == constant.getTag()) {
 				String referencedClass = constantPool.constantToString(constant);
 				
-				if(!referencedClass.startsWith(interestedPackage)) continue;
+				if(!referencedClass.startsWith(project.getInterestedPackage())) continue;
 				
 				// Add to format
 				log.info("Get " + constantPool.constantToString(constant));

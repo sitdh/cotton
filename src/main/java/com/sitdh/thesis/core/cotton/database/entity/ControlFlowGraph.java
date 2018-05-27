@@ -44,4 +44,10 @@ public class ControlFlowGraph {
 	public ControlFlowGraph(Project projectInfo) {
 		this.setProjectId(projectInfo);
 	}
+	
+	public ControlFlowGraph(Project projectInfo, String className, String methodName) {
+		this.setProjectId(projectInfo);
+		this.setClassName(className);
+		this.setMethodName(methodName);
+	}
 }

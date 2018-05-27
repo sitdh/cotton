@@ -20,6 +20,8 @@ import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.PlainGraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.Getter;
@@ -32,29 +34,38 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	public static final String DIGRAPH_METHOD_TYPE = "method";
 	
-	private String interestedPackage;
-	
 	private List<String> graphStructure;
 	
 	private List<Path> classListing;
 	
+	private Project project;
+	
 	@Getter
 	private List<ConstantCollection> constantCollector;
+	
+	@Getter
+	private List<ControlFlowGraph> controlFlowGraphs;
 
-	public SourceCodeGraphAnalysis(List<Path> classListing, String interestedPackage) throws IOException {
+	public SourceCodeGraphAnalysis(
+			List<Path> classListing, 
+			Project project) throws IOException {
+		
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
-		this.interestedPackage = interestedPackage;
+		this.project = project;
+		controlFlowGraphs = Lists.newArrayList();
 		
 		constantCollector = Lists.newArrayList();
+		
+		log.debug("Project X:", project.getInterestedPackage());
 	}
 	
 	public static class SourceCodeGraphAnalysisBuilder {
 		
-		private List<Path> classListing;
+		private List<Path> classListing = Lists.newArrayList();
 		
-		private String interestedPackage;
+		private Project project;
 		
 		public SourceCodeGraphAnalysisBuilder classListing(List<Path> classListing) {
 			if (null == this.classListing) {
@@ -76,14 +87,14 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 			return this;
 		}
 		
-		public SourceCodeGraphAnalysisBuilder interestedPackage(String interestedPackage) {
-			this.interestedPackage = interestedPackage;
+		public SourceCodeGraphAnalysisBuilder project(Project project) {
+			this.project = project;
 			
 			return this;
 		}
 		
 		public SourceCodeGraphAnalysis build() throws IOException {
-			return new SourceCodeGraphAnalysis(classListing, interestedPackage);
+			return new SourceCodeGraphAnalysis(classListing, project);
 		}
 		
 	}
@@ -92,10 +103,12 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		
 		for(Path path : this.classListing) {
 			JavaClass jc = new ClassParser(path.toString()).parse();
-			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, interestedPackage);
+			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, project).analyze();
 			List<String> newGraph = csa.getStructure();
+			
 			constantCollector.addAll(csa.getConstantsCollection());
 			graphStructure.addAll(newGraph);
+			controlFlowGraphs.addAll(csa.getControlFlowGraphs());
 		}
 		
 		return this;
@@ -125,7 +138,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	}
 	
 	private String getShortname(String className) {
-		return StringUtils.replaceAll(className, interestedPackage, "*");
+		return StringUtils.replaceAll(className, this.project.getInterestedPackage(), "*");
 	}
 	
 	private String convertToDotFile(String graphName, List<String> graph) throws NoGraphToAnalyzeException {

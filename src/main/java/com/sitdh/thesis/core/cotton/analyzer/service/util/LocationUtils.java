@@ -63,6 +63,7 @@ public class LocationUtils {
 			.listFiles(new File(projectWorkspace), new String[] {"class"}, true)
 			.stream()
 			.forEach(p -> classFiles.add(Paths.get(p.getPath())));
+		
 		classFiles.stream().forEach(c -> log.info(c.toString()));
 		
 		return classFiles;
