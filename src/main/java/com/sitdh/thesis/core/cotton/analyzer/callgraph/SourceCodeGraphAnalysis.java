@@ -61,6 +61,11 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		log.debug("Project X:", project.getInterestedPackage());
 	}
 	
+	/**
+	 * @deprecated
+	 * @author sitdh
+	 *
+	 */
 	public static class SourceCodeGraphAnalysisBuilder {
 		
 		private List<Path> classListing = Lists.newArrayList();
@@ -89,12 +94,12 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 		
 		public SourceCodeGraphAnalysisBuilder project(Project project) {
 			this.project = project;
-			
+			log.debug("Project assigned: " + project.getProjectId());
 			return this;
 		}
 		
 		public SourceCodeGraphAnalysis build() throws IOException {
-			return new SourceCodeGraphAnalysis(classListing, project);
+			return new SourceCodeGraphAnalysis(this.classListing, this.project);
 		}
 		
 	}

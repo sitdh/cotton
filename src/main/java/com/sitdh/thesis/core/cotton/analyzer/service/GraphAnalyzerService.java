@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,23 +85,27 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		projectSlug = p.getProjectId();
 		
 		try {
-			
+			log.debug("PROJECT SLUG: ", projectSlug);
 			List<Path> allClasses = this.locationUtil.listClassFiles(p.getProjectId(), p.getBranch());
 			
-			scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
-					.classListing(allClasses)
-					.project(p)
-					.build();
+			scga = new SourceCodeGraphAnalysis(allClasses, p);
 			scga.analyze();
 				
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
-			
-			this.cfgRepo.saveAll(scga.getControlFlowGraphs());
+			scga.getControlFlowGraphs().stream().forEach(s -> {
+				System.out.println(
+						String.format("%s", s.getProjectId().getProjectId())
+						);
+				if (null == s.getProjectId()) s.setProjectId(p);
+				this.cfgRepo.save(s);
+			});
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
 			log.error(e.getMessage());
+		} catch (Exception e) { 
+			e.printStackTrace();
 		}
 		
 		return scga.getGraphs();

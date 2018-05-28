@@ -90,6 +90,9 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		if (mg.isAbstract() || mg.isNative()) return;
 		
+		log.debug("Visited method: " + method.getName());
+		log.debug("For Project-x: " + project.getProjectId());
+		
 		MethodStructureAnalysis msa = MethodStructureAnalysis.forClass(mg, jc, project).analyze();
 		
 		structure.addAll(msa.getStructure());

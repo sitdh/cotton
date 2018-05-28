@@ -3,6 +3,7 @@ package com.sitdh.thesis.core.cotton.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,16 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.ConstantAnalyzer;
 import com.sitdh.thesis.core.cotton.analyzer.service.GraphAnalyzer;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
 import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
 import com.sitdh.thesis.core.cotton.database.repository.ControlFlowGraphRepository;
 import com.sitdh.thesis.core.cotton.database.repository.ProjectRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 import com.sitdh.thesis.core.cotton.service.entity.ConstantPackage;
+import com.sitdh.thesis.core.cotton.service.entity.ControlFlowGraphPackage;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,6 +65,7 @@ public class SourceCodeAnalyzerServiceController {
 		this.headers = headers;
 		this.constantRepo = constantRepo;
 		this.projectRepo = projectRepo;
+		this.cfgRepo = cfgRepo;
 	}
 	
 	@GetMapping("/code/constant/{slug}")
@@ -81,6 +86,21 @@ public class SourceCodeAnalyzerServiceController {
 		
 		return new ResponseEntity<>(cps, headers, hs);
 	}
+	
+	@GetMapping("/code/cfg/{slug}")
+	public ResponseEntity<List<ControlFlowGraphPackage>> controlFlowGraph(@PathVariable String slug) {
+		Optional<Project> p = projectRepo.findById(slug);
+		List<ControlFlowGraphPackage> cfgp = Lists.newArrayList();
+		
+		if (p.isPresent()) {
+			List<ControlFlowGraph> cfgs = p.get().getGraphs();
+			
+			cfgp = this.cleanCallgraph(cfgs);
+			
+		}
+		
+		return new ResponseEntity<>(cfgp, headers, HttpStatus.OK);
+	}
 
 	@GetMapping("/code/graph/{slug}/{branch}")
 	public @ResponseBody ResponseEntity<Map<String, String>> analyzeSourcecodeForGraph(
@@ -97,6 +117,8 @@ public class SourceCodeAnalyzerServiceController {
 		project.setProjectId(slug);
 		project.setBranch(branch);
 		project.setInterestedPackage(interestedpackage);
+		
+		project = projectRepo.save(project);
 		
 		Map<String, String> graphStructure = Maps.newHashMap();
 		
@@ -125,5 +147,18 @@ public class SourceCodeAnalyzerServiceController {
 		
 		
 		return  new ResponseEntity<>(graphStructure, h, hs);
+	}
+	
+	private List<ControlFlowGraphPackage> cleanCallgraph(List<ControlFlowGraph> cfgs) {
+		List<ControlFlowGraphPackage> cfg = Lists.newArrayList();
+		Set<String> className = Sets.newHashSet();
+		cfgs.stream().forEach(c -> className.add(c.getCgId().getClassName()));
+		
+		className.stream().forEach(cn -> {
+			List<ControlFlowGraph> cc = cfgs.stream().filter(c -> cn.equals(c.getCgId().getClassName())).collect(Collectors.toList());
+			cfg.add(new ControlFlowGraphPackage(cn, cc));
+		});
+		
+		return cfg;
 	}
 }

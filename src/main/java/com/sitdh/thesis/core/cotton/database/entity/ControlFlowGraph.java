@@ -1,15 +1,15 @@
 package com.sitdh.thesis.core.cotton.database.entity;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,23 +17,15 @@ import lombok.Setter;
 @Entity
 @Table(name="control_flow_graph")
 public class ControlFlowGraph {
-	
-	@Id @GeneratedValue(strategy=GenerationType.AUTO)
+
 	@Column(name="cg_id") @Getter @Setter
-	private Integer cgId;
+	@EmbeddedId
+	private ControlFlowGraphIdentity cgId;
 	
 	@Getter @Setter
 	@ManyToOne(fetch=FetchType.LAZY) 
-	@JoinColumn(name="projectId")
+	@JoinColumn(name="projectId") @JsonIgnore
 	private Project projectId;
-	
-	@Getter @Setter
-	@Column(name="class_name")
-	private String className;
-	
-	@Getter @Setter
-	@Column(name="method_name")
-	private String methodName;
 
 	@Getter @Setter @Lob
 	@Column(name="graph")
@@ -47,7 +39,11 @@ public class ControlFlowGraph {
 	
 	public ControlFlowGraph(Project projectInfo, String className, String methodName) {
 		this.setProjectId(projectInfo);
-		this.setClassName(className);
-		this.setMethodName(methodName);
+		this.cgId = ControlFlowGraph.createNew(className, methodName);
+	}
+	
+	public static ControlFlowGraphIdentity createNew(String className, String methodName) {
+		
+		return new ControlFlowGraphIdentity(className, methodName);
 	}
 }

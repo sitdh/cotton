@@ -58,6 +58,7 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 		this.structure = new ArrayList<String>();
 		this.jc = jc;
 		this.interestedPackage = project.getInterestedPackage();
+		this.project = project;
 		
 		this.classControlFlowGraph = Lists.newArrayList();
 		
@@ -122,7 +123,7 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 			}
 			
 			sb.append("\n}");
-			
+			log.debug("Project id: " + this.project.getProjectId());
 			com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph c 
 				= new com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph(this.project, jc.getClassName(), methods[i].getName());
 			c.setGraph(sb.toString());
