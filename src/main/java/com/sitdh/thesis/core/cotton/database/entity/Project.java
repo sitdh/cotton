@@ -50,6 +50,10 @@ public class Project {
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="projectId")
 	private List<ControlFlowGraph> graphs;
 	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<Vector> vectors;
+	
 	public Project() { }
 	
 	public Project(String projectId) {

@@ -23,9 +23,11 @@ import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
 import com.sitdh.thesis.core.cotton.database.entity.Project;
+import com.sitdh.thesis.core.cotton.database.repository.VectorRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -49,73 +51,36 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 
 	@Getter
 	private List<GraphVector> connections;
+	
+	@Setter
+	private VectorRepository vectorRepo;
 
 	public SourceCodeGraphAnalysis(
 			List<Path> classListing, 
-			Project project) throws IOException {
+			Project project,
+			VectorRepository vectorRepo) throws IOException {
 
 		this.project = project;
+		
+		this.vectorRepo = vectorRepo;
 
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
 		controlFlowGraphs = Lists.newArrayList();
-		
+		connections = Lists.newArrayList();
 		constantCollector = Lists.newArrayList();
-	}
-	
-	/**
-	 * @deprecated
-	 * @author sitdh
-	 *
-	 */
-	public static class SourceCodeGraphAnalysisBuilder {
-		
-		private List<Path> classListing = Lists.newArrayList();
-		
-		private Project project;
-		
-		public SourceCodeGraphAnalysisBuilder classListing(List<Path> classListing) {
-			if (null == this.classListing) {
-				this.classListing = new ArrayList<>();
-			}
-			
-			this.classListing.addAll(classListing);
-			
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysisBuilder classPath(Path path) {
-			if (null == this.classListing) {
-				this.classListing = new ArrayList<>();
-			}
-			
-			this.classListing.add(path);
-			
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysisBuilder project(Project project) {
-			this.project = project;
-			log.debug("Project assigned: " + project.getProjectId());
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysis build() throws IOException {
-			return new SourceCodeGraphAnalysis(this.classListing, this.project);
-		}
 		
 	}
 	
 	public SourceCodeGraphAnalysis analyze() throws ClassFormatException, IOException {
-		
 		for(Path path : this.classListing) {
 			JavaClass jc = new ClassParser(path.toString()).parse();
-			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, project).analyze();
+			ClassStructureAnalysis csa = new ClassStructureAnalysis(jc, project, vectorRepo);
+			csa.analyze();
+			
 			List<String> newGraph = csa.getStructure();
 
-//			connections.addAll(csa.getConnections());
-			constantCollector.addAll(csa.getConstantsCollection());
 			graphStructure.addAll(newGraph);
 			controlFlowGraphs.addAll(csa.getControlFlowGraphs());
 		}

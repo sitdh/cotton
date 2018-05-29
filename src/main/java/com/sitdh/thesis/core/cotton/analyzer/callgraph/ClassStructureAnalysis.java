@@ -1,6 +1,5 @@
 package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +10,6 @@ import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.EmptyVisitor;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.LocalVariable;
-import org.apache.bcel.classfile.LocalVariableTable;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.classfile.Utility;
 import org.apache.bcel.classfile.Visitor;
@@ -23,12 +21,16 @@ import com.sitdh.thesis.core.cotton.analyzer.data.InterestedConstant;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
 import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
 import com.sitdh.thesis.core.cotton.database.entity.Project;
+import com.sitdh.thesis.core.cotton.database.entity.Vector;
+import com.sitdh.thesis.core.cotton.database.repository.VectorRepository;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
+	
+	private VectorRepository vectorRepo;
 	
 	@Getter
 	private List<ConstantCollection> constantsCollection;
@@ -52,13 +54,11 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	
 	private Project project;
 	
-	public ClassStructureAnalysis(JavaClass jc, Project project) {
+	public ClassStructureAnalysis(JavaClass jc, Project project, VectorRepository vectorRepo) {
 		this.jc = jc;
 		constants = new ConstantPoolGen(jc.getConstantPool());
 		
 		graphFormat = "\"C:" + jc.getClassName() + "\" -> \"C:%s\";";
-		
-		structure = new ArrayList<String>();
 		
 		this.project = project;
 		
@@ -69,16 +69,16 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				Const.CONSTANT_Float, Const.CONSTANT_Integer,
 				Const.CONSTANT_String);
 		
+		this.vectorRepo = vectorRepo;
+		
 		constantsCollection = Lists.newArrayList();
 		controlFlowGraphs = Lists.newArrayList();
 		connections = Lists.newArrayList();
-	}
-	
-	public ClassStructureAnalysis analyze() {
+		structure = Lists.newArrayList();
 		
 		jc.getConstantPool().accept(this);
-		log.info("Accept class: " + jc.getClassName());
-		log.info("For Project: " + project.getProjectId());
+		log.debug("Accept class: " + jc.getClassName());
+		log.debug("For Project: " + project.getProjectId());
 		
 		Method[] methods = jc.getMethods();
 		for(int i = 0; i < methods.length; i++) {
@@ -90,12 +90,14 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				localVar.accept(this);
 			}
 		}
-		
+	}
+	
+	public ClassStructureAnalysis analyze() {
 		return this;
 	}
 
-	public static ClassStructureAnalysis forClass(JavaClass jc, Project project) {
-		return new ClassStructureAnalysis(jc, project);
+	public static ClassStructureAnalysis forClass(JavaClass jc, Project project, VectorRepository vectorRepo) {
+		return new ClassStructureAnalysis(jc, project, vectorRepo);
 	}
 	
 	public void visitMethod(Method method) {
@@ -103,14 +105,20 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		if (mg.isAbstract() || mg.isNative()) return;
 		
-		log.debug("Visited method: " + method.getName());
-		log.debug("For Project-x: " + project.getProjectId());
-		
-		MethodStructureAnalysis msa = MethodStructureAnalysis.forClass(mg, jc, project).analyze();
+		MethodStructureAnalysis msa = MethodStructureAnalysis.forClass(mg, jc, project);
+		msa.analyze();
 		
 		structure.addAll(msa.getStructure());
 		controlFlowGraphs.addAll(msa.getClassControlFlowGraph());
-		connections.addAll(msa.getConnections());
+		if (msa.getConnections().size() > 0) {
+			msa.getConnections().stream().forEach(gv -> {
+				Vector v = new Vector(gv);
+				v.setProject(project);
+				
+				vectorRepo.save(v);
+			});
+//			connections.addAll(msa.getConnections());
+		}
 	}
 	
 	public void visitConstantPool(ConstantPool constantPool) {
@@ -125,7 +133,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 				if(!referencedClass.startsWith(project.getInterestedPackage())) continue;
 				
 				// Add to format
-				log.info("Get " + constantPool.constantToString(constant));
+				log.debug("Get " + constantPool.constantToString(constant));
 				
 				this.structure.add(
 						String.format(
@@ -136,7 +144,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 			} else {
 				InterestedConstant c = InterestedConstant.getInterestedConstant(constant.getTag());
 				String value = constantPool.constantToString(constant).replaceAll("\"", "");
-				log.info(String.format("Type: %s, value: %s", c.getType(), value));
+				log.debug(String.format("Type: %s, value: %s", c.getType(), value));
 				
 				constantsCollection.add(new ConstantCollection("", c.getType(), value));
 			}

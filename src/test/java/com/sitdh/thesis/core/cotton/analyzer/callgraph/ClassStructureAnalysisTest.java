@@ -36,7 +36,7 @@ public class ClassStructureAnalysisTest {
 		JavaClass jc = new ClassParser(location).parse();
 		Project p = mock(Project.class);
 		when(p.getInterestedPackage()).thenReturn("com.sitdh.thesis.demo");
-		List<String> structure = ClassStructureAnalysis.forClass(jc, p).getStructure();
+		List<String> structure = ClassStructureAnalysis.forClass(jc, p, null).getStructure();
 		
 		assertThat(structure.size() > 0, is(true));
 	}

@@ -3,9 +3,7 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
-import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.LineNumberTable;
@@ -201,18 +199,19 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 			log.info(msg);
 			
 			this.structure.add(msg);
-
-			this.connections.add(
-					GraphVector.builder()
-							.source(this.sourceClassName)
-                            .target(referenceType)
-                            .edge(String.format("%s:%s", this.sourceMethod, method))
-                            .build()
-			);
-
-		} else {
-			log.info("Not interested package: " + referenceType);
 			
+			GraphVector vector = GraphVector.builder()
+					.source(this.sourceClassName)
+                    .target(referenceType)
+                    .edge(String.format("%s:%s", this.sourceMethod, method))
+                    .build();
+			
+			this.connections.add(vector);
+			
+			log.debug("From: " + vector.getSource() + " - " + vector.getEdge() + " > " + vector.getTarget());
+			
+		} else {
+			log.debug("Not interested package: " + referenceType);
 		}
 	}
 
