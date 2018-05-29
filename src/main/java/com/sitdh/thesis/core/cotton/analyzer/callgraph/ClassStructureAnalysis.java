@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Constant;
 import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.EmptyVisitor;
 import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.classfile.LocalVariable;
+import org.apache.bcel.classfile.LocalVariableTable;
 import org.apache.bcel.classfile.Method;
+import org.apache.bcel.classfile.Utility;
 import org.apache.bcel.classfile.Visitor;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.MethodGen;
@@ -42,6 +46,9 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 	
 	@Getter
 	private List<ControlFlowGraph> controlFlowGraphs;
+
+	@Getter
+	private List<GraphVector> connections;
 	
 	private Project project;
 	
@@ -56,7 +63,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		this.project = project;
 		
 		log.debug("Log already constructed");
-		
+		// Add more
 		interestedFiledInstructions = Lists.newArrayList(
 				Const.CONSTANT_Class, Const.CONSTANT_Double, 
 				Const.CONSTANT_Float, Const.CONSTANT_Integer,
@@ -64,6 +71,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		constantsCollection = Lists.newArrayList();
 		controlFlowGraphs = Lists.newArrayList();
+		connections = Lists.newArrayList();
 	}
 	
 	public ClassStructureAnalysis analyze() {
@@ -76,6 +84,11 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		for(int i = 0; i < methods.length; i++) {
 			if (!"<init>".equals(methods[i].getName())) 
 				methods[i].accept(this);
+			
+			for(LocalVariable localVar : methods[i].getLocalVariableTable().getLocalVariableTable()) {
+				log.debug(Utility.signatureToString(localVar.getSignature()) + " => " + localVar.getName());
+				localVar.accept(this);
+			}
 		}
 		
 		return this;
@@ -97,6 +110,7 @@ public class ClassStructureAnalysis extends EmptyVisitor implements Visitor {
 		
 		structure.addAll(msa.getStructure());
 		controlFlowGraphs.addAll(msa.getClassControlFlowGraph());
+		connections.addAll(msa.getConnections());
 	}
 	
 	public void visitConstantPool(ConstantPool constantPool) {

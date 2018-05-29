@@ -3,7 +3,10 @@ package com.sitdh.thesis.core.cotton.analyzer.callgraph;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.LineNumberTable;
 import org.apache.bcel.classfile.Method;
@@ -44,10 +47,17 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 	private JavaClass jc;
 	
 	private String interestedPackage;
+
+	private String sourceClassName;
+
+	private String sourceMethod;
+
+	@Getter
+	private List<GraphVector> connections;
 	
 	@Getter
 	private List<String> structure;
-	
+
 	@Getter
 	private List<com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph> classControlFlowGraph;
 	
@@ -59,9 +69,13 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 		this.jc = jc;
 		this.interestedPackage = project.getInterestedPackage();
 		this.project = project;
+		this.connections = Lists.newArrayList();
 		
 		this.classControlFlowGraph = Lists.newArrayList();
 		
+		this.sourceClassName = jc.getClassName();
+		this.sourceMethod = mg.getName();
+
 		format = "'M:" + jc.getClassName() + "' -> '%s:%s' [label = '" + mg.getName() + ":%s'];";
 	}
 	
@@ -77,9 +91,9 @@ public class MethodStructureAnalysis extends EmptyVisitor {
             if (!this.instructionFilter(i))
                 i.accept(this);
         }
-		
-		/** Hello **/
-		
+
+        // TODO:: Revise need
+
 		Method[] methods = jc.getMethods();
 		for (int i = 0; i < methods.length; i++) {
 			MethodGen mg = new MethodGen(methods[i], jc.getClassName(), constants);
@@ -96,13 +110,7 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 									methods[i].getName(),
 									"{\n"
 									), " "));
-			sb.append(
-					StringUtils.join(
-							Arrays.asList(
-									"label=\"", 
-									methods[i].getName(),
-									"\";"
-									), " "));
+			sb.append("\tlabel=\"" + methods[i].getName() + "\";");
 			int pos;
 			String instr;
 			for (int j = 0; j < ics.length; j++) {
@@ -193,7 +201,15 @@ public class MethodStructureAnalysis extends EmptyVisitor {
 			log.info(msg);
 			
 			this.structure.add(msg);
-			
+
+			this.connections.add(
+					GraphVector.builder()
+							.source(this.sourceClassName)
+                            .target(referenceType)
+                            .edge(String.format("%s:%s", this.sourceMethod, method))
+                            .build()
+			);
+
 		} else {
 			log.info("Not interested package: " + referenceType);
 			

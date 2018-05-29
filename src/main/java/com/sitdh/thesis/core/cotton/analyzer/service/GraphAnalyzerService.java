@@ -6,8 +6,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
+import com.google.common.graph.Graph;
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -38,6 +40,8 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	private ControlFlowGraphRepository cfgRepo;
 	
 	private String projectSlug;
+
+	private List<GraphVector> connections;
 	
 	@Autowired
 	public GraphAnalyzerService(LocationUtils locationUtil, 
@@ -47,6 +51,8 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 		this.locationUtil = locationUtil;
 		this.constantCollectorRepo = constantCollectorRepository;
 		this.cfgRepo = cfgRepo;
+
+    this.connections = Lists.newArrayList();
 	}
 	
 	@Override
@@ -68,9 +74,9 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 					.classListing(allClasses)
 					.build()
 					.analyze();
-			
+
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
@@ -99,7 +105,11 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 				if (null == s.getProjectId()) s.setProjectId(p);
 				this.cfgRepo.save(s);
 			});
-			
+
+			scga.getConnections().forEach(c -> {
+				log.debug("Connection: from - ", c.getSource(), " [", c.getEdge(), "] ", c.getTarget());
+			});
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());

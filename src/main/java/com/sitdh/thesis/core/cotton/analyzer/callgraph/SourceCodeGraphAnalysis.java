@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.EmptyVisitor;
@@ -37,7 +38,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	private List<String> graphStructure;
 	
 	private List<Path> classListing;
-	
+
 	private Project project;
 	
 	@Getter
@@ -46,19 +47,21 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	@Getter
 	private List<ControlFlowGraph> controlFlowGraphs;
 
+	@Getter
+	private List<GraphVector> connections;
+
 	public SourceCodeGraphAnalysis(
 			List<Path> classListing, 
 			Project project) throws IOException {
-		
+
+		this.project = project;
+
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
-		this.project = project;
 		controlFlowGraphs = Lists.newArrayList();
 		
 		constantCollector = Lists.newArrayList();
-		
-		log.debug("Project X:", project.getInterestedPackage());
 	}
 	
 	/**
@@ -110,7 +113,8 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 			JavaClass jc = new ClassParser(path.toString()).parse();
 			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, project).analyze();
 			List<String> newGraph = csa.getStructure();
-			
+
+//			connections.addAll(csa.getConnections());
 			constantCollector.addAll(csa.getConstantsCollection());
 			graphStructure.addAll(newGraph);
 			controlFlowGraphs.addAll(csa.getControlFlowGraphs());

@@ -39,7 +39,7 @@ public class Project {
 	private List<FileName> files;
 	
 	@Getter @Setter @Lob
-	@Column(name="graph_graph", nullable=true)
+	@Column(name="graph_class", nullable=true)
 	private String graphClass;
 	
 	@Getter @Setter @Lob

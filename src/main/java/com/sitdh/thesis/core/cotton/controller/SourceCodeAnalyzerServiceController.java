@@ -97,6 +97,7 @@ public class SourceCodeAnalyzerServiceController {
 			
 			cfgp = this.cleanCallgraph(cfgs);
 			
+			
 		}
 		
 		return new ResponseEntity<>(cfgp, headers, HttpStatus.OK);
@@ -145,17 +146,22 @@ public class SourceCodeAnalyzerServiceController {
 			graphStructure.put(SourceCodeGraphAnalysis.DIGRAPH_METHOD_TYPE, project.getGraphMethod());
 		}
 		
-		
 		return  new ResponseEntity<>(graphStructure, h, hs);
 	}
 	
 	private List<ControlFlowGraphPackage> cleanCallgraph(List<ControlFlowGraph> cfgs) {
 		List<ControlFlowGraphPackage> cfg = Lists.newArrayList();
 		Set<String> className = Sets.newHashSet();
-		cfgs.stream().forEach(c -> className.add(c.getCgId().getClassName()));
+		
+		cfgs.stream().forEach(c -> {
+			className.add(c.getCgId().getClassName());
+		});
 		
 		className.stream().forEach(cn -> {
-			List<ControlFlowGraph> cc = cfgs.stream().filter(c -> cn.equals(c.getCgId().getClassName())).collect(Collectors.toList());
+			List<ControlFlowGraph> cc = cfgs.stream()
+					.filter(c -> cn.equals(c.getCgId().getClassName())
+					)
+					.collect(Collectors.toList());
 			cfg.add(new ControlFlowGraphPackage(cn, cc));
 		});
 		
