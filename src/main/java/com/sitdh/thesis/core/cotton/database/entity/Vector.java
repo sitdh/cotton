@@ -1,5 +1,7 @@
 package com.sitdh.thesis.core.cotton.database.entity;
 
+import java.util.Objects;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -20,7 +22,7 @@ import lombok.Setter;
 @Table
 public class Vector {
 
-	@Getter @Setter
+	@Getter @Setter @JsonIgnore
 	@Id @GeneratedValue(strategy=GenerationType.AUTO)
 	private Integer vid;
 	
@@ -46,5 +48,15 @@ public class Vector {
 		this.setTarget(gv.getTarget());
 	}
 	
+	public boolean equals(Vector o) {
+    	
+    	return this.getSource().equals(o.getSource()) 
+    			&& this.getTarget().equals(o.getTarget()) 
+    			&& this.getEdge().equals(o.getEdge());
+    }
+    
+    public int hashCode() {
+    	return Objects.hash(this.getSource() + this.getEdge() + this.getSource());
+    }
 	
 }

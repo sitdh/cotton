@@ -164,15 +164,7 @@
 			<groupId>org.apache.tinkerpop</groupId>
 			<artifactId>tinkergraph-gremlin</artifactId>
 			<version>3.3.3</version>
-			<scope>compile</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>tinkergraph-gremlin</artifactId>
-            <version>3.3.3</version>
-            <scope>compile</scope>
-        </dependency>
-
     </dependencies>
 
 	<build>
