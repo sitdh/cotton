@@ -83,6 +83,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 
 			graphStructure.addAll(newGraph);
 			controlFlowGraphs.addAll(csa.getControlFlowGraphs());
+			constantCollector.addAll(csa.getConstantsCollection());
 		}
 		
 		return this;

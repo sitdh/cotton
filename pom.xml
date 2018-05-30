@@ -22,7 +22,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>10</java.version>
+		<java.version>8</java.version>
 		<tinkerpop.version>3.3.3</tinkerpop.version>
 		<bcel.version>6.2</bcel.version>
 		<javaassist.version>3.22.0-GA</javaassist.version>
