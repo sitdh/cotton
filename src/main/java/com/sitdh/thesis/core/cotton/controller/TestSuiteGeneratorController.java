@@ -39,13 +39,17 @@ public class TestSuiteGeneratorController {
 	
 	private ProjectRepository projectRrepo;
 	
-	@Autowired
 	private HttpHeaders headers;
 
 	@Autowired
-	public TestSuiteGeneratorController(ProjectRepository projectRepo, VectorRepository vectorRepo) {
+	public TestSuiteGeneratorController(
+			HttpHeaders headers,
+			ProjectRepository projectRepo, 
+			VectorRepository vectorRepo) {
+		
 		this.projectRrepo = projectRepo;
 		this.vectorRepo = vectorRepo;
+		this.headers = headers;
 	}
 	
 	@GetMapping("/code/test-paths/{slug}")

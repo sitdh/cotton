@@ -54,6 +54,10 @@ public class Project {
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
 	private List<Vector> vectors;
 	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<TestPath> testpaths;
+	
 	public Project() { }
 	
 	public Project(String projectId) {

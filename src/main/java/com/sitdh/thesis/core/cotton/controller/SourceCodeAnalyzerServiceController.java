@@ -96,8 +96,6 @@ public class SourceCodeAnalyzerServiceController {
 			List<ControlFlowGraph> cfgs = p.get().getGraphs();
 			
 			cfgp = this.cleanCallgraph(cfgs);
-			
-			
 		}
 		
 		return new ResponseEntity<>(cfgp, headers, HttpStatus.OK);
