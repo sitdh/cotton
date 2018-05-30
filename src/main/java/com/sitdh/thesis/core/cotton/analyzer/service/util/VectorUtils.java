@@ -5,9 +5,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-
 import com.google.common.collect.Lists;
 import com.sitdh.thesis.core.cotton.database.entity.Vector;
 
@@ -62,14 +59,13 @@ public class VectorUtils {
 	}
 	
 	public static void allTestPath(List<Vector> vectors) {
-		TinkerGraph graph = TinkerGraph.open();
-		GraphTraversalSource g = graph.traversal();
-		
-		Optional<List<Vector>> queriedMainClass = VectorUtils.allMainClass(vectors);
-		if (queriedMainClass.isPresent()) {
-			List<Vector> mainClasses = queriedMainClass.get();
-			
-		}
+//		TinkerGraph graph = TinkerGraph.open();
+//		GraphTraversalSource g = graph.traversal();
+//		
+//		Optional<List<Vector>> queriedMainClass = VectorUtils.allMainClass(vectors);
+//		if (queriedMainClass.isPresent()) {
+//			List<Vector> mainClasses = queriedMainClass.get();
+//		}
 		
 	}
 	

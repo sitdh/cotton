@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.label;
-
 @Slf4j
 @Service("TestPathAnalyzerService")
 public class TestPathAnalyzerService implements TestPathAnalyzer {

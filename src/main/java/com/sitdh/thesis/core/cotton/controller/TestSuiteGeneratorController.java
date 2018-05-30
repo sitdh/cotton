@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 public class TestSuiteGeneratorController {
 	
-	private VectorRepository vectorRepo;
+//	private VectorRepository vectorRepo;
 	
 	private ProjectRepository projectRrepo;
 	
@@ -48,7 +48,7 @@ public class TestSuiteGeneratorController {
 			VectorRepository vectorRepo) {
 		
 		this.projectRrepo = projectRepo;
-		this.vectorRepo = vectorRepo;
+//		this.vectorRepo = vectorRepo;
 		this.headers = headers;
 	}
 	
