@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.EmptyVisitor;
@@ -20,9 +21,13 @@ import com.google.common.collect.Maps;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.PlainGraphTemplate;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.SubgraphTemplate;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.ControlFlowGraph;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
+import com.sitdh.thesis.core.cotton.database.repository.VectorRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,70 +37,53 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	
 	public static final String DIGRAPH_METHOD_TYPE = "method";
 	
-	private String interestedPackage;
-	
 	private List<String> graphStructure;
 	
 	private List<Path> classListing;
+
+	private Project project;
 	
 	@Getter
 	private List<ConstantCollection> constantCollector;
+	
+	@Getter
+	private List<ControlFlowGraph> controlFlowGraphs;
 
-	public SourceCodeGraphAnalysis(List<Path> classListing, String interestedPackage) throws IOException {
+	@Getter
+	private List<GraphVector> connections;
+	
+	@Setter
+	private VectorRepository vectorRepo;
+
+	public SourceCodeGraphAnalysis(
+			List<Path> classListing, 
+			Project project,
+			VectorRepository vectorRepo) throws IOException {
+
+		this.project = project;
+		
+		this.vectorRepo = vectorRepo;
+
 		log.info("Object create");
 		this.classListing = classListing;
 		graphStructure = new ArrayList<String>();
-		this.interestedPackage = interestedPackage;
-		
+		controlFlowGraphs = Lists.newArrayList();
+		connections = Lists.newArrayList();
 		constantCollector = Lists.newArrayList();
-	}
-	
-	public static class SourceCodeGraphAnalysisBuilder {
-		
-		private List<Path> classListing;
-		
-		private String interestedPackage;
-		
-		public SourceCodeGraphAnalysisBuilder classListing(List<Path> classListing) {
-			if (null == this.classListing) {
-				this.classListing = new ArrayList<>();
-			}
-			
-			this.classListing.addAll(classListing);
-			
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysisBuilder classPath(Path path) {
-			if (null == this.classListing) {
-				this.classListing = new ArrayList<>();
-			}
-			
-			this.classListing.add(path);
-			
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysisBuilder interestedPackage(String interestedPackage) {
-			this.interestedPackage = interestedPackage;
-			
-			return this;
-		}
-		
-		public SourceCodeGraphAnalysis build() throws IOException {
-			return new SourceCodeGraphAnalysis(classListing, interestedPackage);
-		}
 		
 	}
 	
 	public SourceCodeGraphAnalysis analyze() throws ClassFormatException, IOException {
-		
 		for(Path path : this.classListing) {
 			JavaClass jc = new ClassParser(path.toString()).parse();
-			ClassStructureAnalysis csa = ClassStructureAnalysis.forClass(jc, interestedPackage);
+			ClassStructureAnalysis csa = new ClassStructureAnalysis(jc, project, vectorRepo);
+			csa.analyze();
+			
 			List<String> newGraph = csa.getStructure();
-			constantCollector.addAll(csa.getConstantsCollection());
+
 			graphStructure.addAll(newGraph);
+			controlFlowGraphs.addAll(csa.getControlFlowGraphs());
+			constantCollector.addAll(csa.getConstantsCollection());
 		}
 		
 		return this;
@@ -125,7 +113,7 @@ public class SourceCodeGraphAnalysis extends EmptyVisitor {
 	}
 	
 	private String getShortname(String className) {
-		return StringUtils.replaceAll(className, interestedPackage, "*");
+		return StringUtils.replaceAll(className, this.project.getInterestedPackage(), "*");
 	}
 	
 	private String convertToDotFile(String graphName, List<String> graph) throws NoGraphToAnalyzeException {

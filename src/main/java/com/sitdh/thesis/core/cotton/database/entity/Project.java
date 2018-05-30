@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -22,17 +23,50 @@ public class Project {
 	private String projectId;
 	
 	@Getter @Setter
-	@Column(name="owner", length=50)
+	@Column(name="owner", length=50, nullable=true)
 	private String owner;
+	
+	@Getter @Setter
+	@Column(length=50)
+	private String branch;
+	
+	@Getter @Setter
+	@Column(name="interested_package", length=50)
+	private String interestedPackage;
 	
 	@Getter @Setter
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="container")
 	private List<FileName> files;
 	
+	@Getter @Setter @Lob
+	@Column(name="graph_class", nullable=true)
+	private String graphClass;
+	
+	@Getter @Setter @Lob
+	@Column(name="graph_method", nullable=true)
+	private String graphMethod;
+	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="projectId")
+	private List<ControlFlowGraph> graphs;
+	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<Vector> vectors;
+	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<TestPath> testpaths;
+	
 	public Project() { }
 	
-	public Project(String projectId, String owner) {
+	public Project(String projectId) {
 		this.setProjectId(projectId);
-		this.setOwner(owner);
+	}
+	
+	public Project(String projectId, String branch, String interestedPackage) {
+		this.setProjectId(projectId);
+		this.setBranch(branch);
+		this.setInterestedPackage(interestedPackage);
 	}
 }

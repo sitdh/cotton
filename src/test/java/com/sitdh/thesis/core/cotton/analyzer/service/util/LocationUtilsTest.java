@@ -135,4 +135,19 @@ public class LocationUtilsTest {
 		assertThat(classfileLocation.size() == 0, is(true));
 	}
 
+    @Test
+    public void getProjectWorkspace() {
+    }
+
+    @Test
+    public void listClassFiles() {
+    }
+
+    @Test
+    public void getMainClass() {
+    }
+
+    @Test
+    public void filterForMainClass() {
+    }
 }

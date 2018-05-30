@@ -47,8 +47,8 @@ public class SourceCodeAnalyzerServiceControllerTest {
 	@MockBean(name="SimpleGraphAnalyzer")
 	private GraphAnalyzer graphAnalyzer;
 	
-	@Autowired
-	private SourceCodeAnalyzerServiceController srcAnalyzer;
+//	@Autowired
+//	private SourceCodeAnalyzerServiceController srcAnalyzer;
 
 //	@Test
 	public void shouldReturnConsntantList() throws Exception {

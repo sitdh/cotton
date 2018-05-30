@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.collect.Lists;
+import com.sitdh.thesis.core.cotton.analyzer.data.GraphVector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -15,9 +17,13 @@ import org.springframework.stereotype.Service;
 import com.sitdh.thesis.core.cotton.analyzer.callgraph.SourceCodeGraphAnalysis;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 import com.sitdh.thesis.core.cotton.database.entity.ConstantCollection;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 import com.sitdh.thesis.core.cotton.database.repository.ConstantCollectionRepository;
+import com.sitdh.thesis.core.cotton.database.repository.ControlFlowGraphRepository;
+import com.sitdh.thesis.core.cotton.database.repository.VectorRepository;
 import com.sitdh.thesis.core.cotton.exception.NoGraphToAnalyzeException;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,12 +38,27 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	
 	private ConstantCollectionRepository constantCollectorRepo;
 	
+	private ControlFlowGraphRepository cfgRepo;
+	
+	private VectorRepository vectorRepo;
+	
 	private String projectSlug;
+
+	@Getter
+	private List<GraphVector> connections;
 	
 	@Autowired
-	public GraphAnalyzerService(LocationUtils locationUtil, ConstantCollectionRepository constantCollectorRepository) {
+	public GraphAnalyzerService(LocationUtils locationUtil, 
+			ConstantCollectionRepository constantCollectorRepository,
+			ControlFlowGraphRepository cfgRepo,
+			VectorRepository graphRepo) {
+		
 		this.locationUtil = locationUtil;
 		this.constantCollectorRepo = constantCollectorRepository;
+		this.cfgRepo = cfgRepo;
+		this.vectorRepo = graphRepo;
+
+		this.connections = Lists.newArrayList();
 	}
 	
 	@Override
@@ -49,51 +70,37 @@ public class GraphAnalyzerService implements GraphAnalyzer {
 	public String analyzed(String slug, String branch, String interestedPackage) throws NoGraphToAnalyzeException {
 		
 		String digraph = null;
-		projectSlug = slug;
-		
-		try {
-			
-			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
-			
-			SourceCodeGraphAnalysis scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
-					.classListing(allClasses)
-					.interestedPackage(interestedPackage)
-					.build()
-					.analyze();
-			
-			scga.getConstantCollector().forEach(this::saveCollectedConstants);
-			
-//			digraph = scga.getDigraph();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println(e.getMessage());
-		}
 		
 		return digraph;
 	}
 	
-	public Map<String, String> analyzedStructure(String slug, String branch, String interestedPackage) throws NoGraphToAnalyzeException {
+	public Map<String, String> analyzedStructure(Project p) throws NoGraphToAnalyzeException {
 		SourceCodeGraphAnalysis scga = null;
 		
-		projectSlug = slug;
+		projectSlug = p.getProjectId();
 		
 		try {
+			log.debug("PROJECT SLUG: ", projectSlug);
+			List<Path> allClasses = this.locationUtil.listClassFiles(p.getProjectId(), p.getBranch());
 			
-			List<Path> allClasses = this.locationUtil.listClassFiles(slug, branch);
-			
-			scga = new SourceCodeGraphAnalysis.SourceCodeGraphAnalysisBuilder()
-					.classListing(allClasses)
-					.interestedPackage(interestedPackage)
-					.build()
-					.analyze();
+			scga = new SourceCodeGraphAnalysis(allClasses, p, vectorRepo).analyze();
+			scga.setVectorRepo(vectorRepo);
 				
 			scga.getConstantCollector().forEach(this::saveCollectedConstants);
+			scga.getControlFlowGraphs().stream().forEach(s -> {
+				System.out.println(
+						String.format("%s", s.getProjectId().getProjectId())
+						);
+				if (null == s.getProjectId()) s.setProjectId(p);
+				this.cfgRepo.save(s);
+			});
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
 			log.error(e.getMessage());
+		} catch (Exception e) { 
+			e.printStackTrace();
 		}
 		
 		return scga.getGraphs();
