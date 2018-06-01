@@ -18,29 +18,29 @@ public class TestcaseGeneratorProcessBuilder implements TestCaseBuilder {
 
 	@Override
 	public void build(ProcessConfiguration processConfig) throws IOException, InterruptedException {
-//		Log.debug("Getting start to build command");
-//		List<String> command = Lists.newArrayList(
-//				processConfig.javahome(),
-//				"-jar",
-//				processConfig.evosuiteJar(),
-//				"-target",
-//				"target/classes",
-//				"-criterion",
-//				"branch"
-//				);
-//		
-//		log.debug("Command builded: " + command.toString());
-//		
-//		ProcessBuilder builder = new ProcessBuilder();
-//		builder.directory(new File(processConfig.projectLocation()));
-//		builder.command(command);
-//		
-//		builder.redirectOutput(Redirect.INHERIT);
-//		builder.redirectError(Redirect.INHERIT);
-//		
-//		Process process = builder.start();
+		Log.debug("Getting start to build command");
+		List<String> command = Lists.newArrayList(
+				processConfig.javahome(),
+				"-jar",
+				processConfig.evosuiteJar(),
+				"-target",
+				"target/classes",
+				"-criterion",
+				"branch"
+				);
+		
+		log.debug("Command builded: " + command.toString());
+		
+		ProcessBuilder builder = new ProcessBuilder();
+		builder.directory(new File(processConfig.projectLocation()));
+		builder.command(command);
+		
+		builder.redirectOutput(Redirect.INHERIT);
+		builder.redirectError(Redirect.INHERIT);
+		
+		Process process = builder.start();
 		int exitCode = 0;
-//		exitCode = process.waitFor();
+		exitCode = process.waitFor();
 		
 		assert exitCode == 0;
 		
