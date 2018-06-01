@@ -39,10 +39,9 @@ public class TestcaseGeneratorProcessBuilder implements TestCaseBuilder {
 //		builder.redirectError(Redirect.INHERIT);
 //		
 //		Process process = builder.start();
-//		
-//		int exitCode = process.waitFor();
-		
 		int exitCode = 0;
+//		exitCode = process.waitFor();
+		
 		assert exitCode == 0;
 		
 	}

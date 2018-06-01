@@ -17,12 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.collect.Lists;
 import com.sitdh.thesis.core.cotton.analyzer.service.util.LocationUtils;
 import com.sitdh.thesis.core.cotton.database.entity.Project;
+import com.sitdh.thesis.core.cotton.database.entity.TestSuite;
 import com.sitdh.thesis.core.cotton.database.repository.ProjectRepository;
+import com.sitdh.thesis.core.cotton.database.repository.TestSuiteRepository;
 import com.sitdh.thesis.core.cotton.generator.ProcessConfiguration;
 import com.sitdh.thesis.core.cotton.generator.TestCaseBuilder;
 import com.sitdh.thesis.core.cotton.generator.TestcaseGeneraterProcessConfiguration;
@@ -45,6 +48,8 @@ public class TestCaseGenerateController {
 	@Autowired
 	private HttpHeaders headers;
 	
+	private TestSuiteRepository testSuiteRepo;
+	
 	private ProjectRepository projectRepo;
 	
 	private LocationUtils locationUtils;
@@ -55,33 +60,43 @@ public class TestCaseGenerateController {
 	public TestCaseGenerateController(
 			ProjectRepository projectRepo,
 			LocationUtils locationUtils,
-			TestCaseBuilder testBuilder
+			TestCaseBuilder testBuilder,
+			TestSuiteRepository testSuiteRepo
 			) {
 		
 		this.projectRepo = projectRepo;
 		this.locationUtils = locationUtils;
 		this.testBuilder = testBuilder;
+		this.testSuiteRepo = testSuiteRepo;
 	}
 	
 	@GetMapping("/test/generator/{slug}/status")
 	public ResponseEntity<TestCaseGeneratorResponsePackage> testsuiteGenerateStatusForProject(@PathVariable String slug) throws FileNotFoundException {
-		TestCaseGeneratorResponsePackage tcgRP = new TestCaseGeneratorResponsePackage();
+		TestCaseGeneratorResponsePackage tcgRP = TestCaseGeneratorResponsePackage.builder()
+				.testmessage("Test message")
+				.generated("Failure")
+				.build();
+		
 		Optional<Project> optionalProject = projectRepo.findById(slug);
 		
 		if (optionalProject.isPresent() && optionalProject.get().getTestsuites().size() > 0) {
 			Project project = optionalProject.get();
-			project.getTestsuites().get(0).getTestcases()
+			if (project.getTestsuites().get(0).getTestcases().size() > 0) {
+				tcgRP.setGenerated("Done");
+			}
 		}
 		
-		return null;
+		return new ResponseEntity<>(tcgRP, headers, HttpStatus.OK);
 	}
 	
 	@GetMapping("/test/generator/{slug}")
 	public ResponseEntity<TestCaseGeneratorResponsePackage> generateTestCaseForProject(@PathVariable String slug) throws FileNotFoundException {
 		log.debug("Getting start");
 		
-		TestCaseGeneratorResponsePackage tcgPackage = new TestCaseGeneratorResponsePackage();
-		tcgPackage.setGenerated("Failure");
+		TestCaseGeneratorResponsePackage tcgPackage = TestCaseGeneratorResponsePackage.builder()
+				.testmessage("Test message")
+				.generated("Failure")
+				.build();
 		
 		Optional<Project> project = projectRepo.findById(slug);
 		if (project.isPresent()) {
@@ -99,6 +114,10 @@ public class TestCaseGenerateController {
 				this.testBuilder.build(pconf);
 				
 				fileExists = new File(projectLocation + "/evosuite-tests").exists();
+				
+				TestSuite ts = new TestSuite();
+				ts.setProject(project.get());
+				testSuiteRepo.save(ts);
 				
 				tcgPackage.setTestmessage("Fine");
 			} catch (IOException | InterruptedException e) {
@@ -120,11 +139,16 @@ public class TestCaseGenerateController {
 	}
 	
 	@GetMapping("/test/testsuite/{slug}")
-	public ResponseEntity<List<TestSuiteDataPackage>> testsuiteProvider(@PathVariable String slug) throws FileNotFoundException {
+	public ResponseEntity<List<TestSuiteDataPackage>> testsuiteProvider(
+			@PathVariable String slug,
+			@RequestParam("update") Optional<Boolean> optionalUpdate) throws FileNotFoundException {
+		
 		Optional<Project> optionalProject = projectRepo.findById(slug);
 		List<TestSuiteDataPackage> testsuitePackage = Lists.newArrayList();
 		List<File> testsuiteFile = Lists.newArrayList();
+		
 		if (optionalProject.isPresent()) {
+			
 			Project project = optionalProject.get();
 			testsuiteFile = locationUtils.getEvosuteTestFiles(project);
 			testsuiteFile.forEach(file -> {
