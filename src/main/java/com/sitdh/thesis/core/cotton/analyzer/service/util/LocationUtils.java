@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import com.sitdh.thesis.core.cotton.database.entity.Project;
 
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

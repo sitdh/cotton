@@ -63,6 +63,19 @@ public class TestCaseGenerateController {
 		this.testBuilder = testBuilder;
 	}
 	
+	@GetMapping("/test/generator/{slug}/status")
+	public ResponseEntity<TestCaseGeneratorResponsePackage> testsuiteGenerateStatusForProject(@PathVariable String slug) throws FileNotFoundException {
+		TestCaseGeneratorResponsePackage tcgRP = new TestCaseGeneratorResponsePackage();
+		Optional<Project> optionalProject = projectRepo.findById(slug);
+		
+		if (optionalProject.isPresent() && optionalProject.get().getTestsuites().size() > 0) {
+			Project project = optionalProject.get();
+			project.getTestsuites().get(0).getTestcases()
+		}
+		
+		return null;
+	}
+	
 	@GetMapping("/test/generator/{slug}")
 	public ResponseEntity<TestCaseGeneratorResponsePackage> generateTestCaseForProject(@PathVariable String slug) throws FileNotFoundException {
 		log.debug("Getting start");
