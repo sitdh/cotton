@@ -48,6 +48,10 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
 
 		<!-- Call Graph Tools -->
 		<!-- https://mvnrepository.com/artifact/org.apache.bcel/bcel -->
@@ -165,7 +169,7 @@
 			<artifactId>tinkergraph-gremlin</artifactId>
 			<version>3.3.3</version>
 		</dependency>
-    </dependencies>
+	</dependencies>
 
 	<build>
 		<plugins>
