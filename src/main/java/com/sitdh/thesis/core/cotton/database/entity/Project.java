@@ -58,6 +58,14 @@ public class Project {
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
 	private List<TestPath> testpaths;
 	
+	@Getter @Setter 
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<TestSuite> testsuites;
+	
+	@Getter @Setter
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY, mappedBy="project")
+	private List<DynamicVector> dynamicVectors;
+	
 	public Project() { }
 	
 	public Project(String projectId) {

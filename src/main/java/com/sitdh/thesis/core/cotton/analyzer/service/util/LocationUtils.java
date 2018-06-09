@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.bcel.classfile.ClassFormatException;
 import org.apache.bcel.classfile.ClassParser;
@@ -18,9 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.java.Log;
+import com.sitdh.thesis.core.cotton.database.entity.Project;
 
-@Log
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @PropertySource("classpath:/graph.properties")
 public class LocationUtils {
@@ -30,6 +33,26 @@ public class LocationUtils {
 	
 	@Value("${graph.app.project.classes}")
 	private String classLocation;
+	
+	public String getProjectWorkspace(Project project) throws FileNotFoundException {
+		return this.getProjectWorkspace(project.getProjectId(), project.getBranch());
+	}
+	
+	public String getEvosuiteLocation(Project project) throws FileNotFoundException {
+		return this.getProjectWorkspace(project) + "/evosuite-tests";
+	}
+	
+	public List<File> getEvosuteTestFiles(Project project) throws FileNotFoundException {
+		String evosuiteLocation = this.getEvosuiteLocation(project);
+		String d = new File(evosuiteLocation).isDirectory() ? "YES" : "Unknown" ;
+		log.debug(d);
+		return FileUtils
+				.listFiles(new File(evosuiteLocation), new String[] { "java" }, true)
+				.stream()
+				.peek(f -> log.debug(f.getAbsolutePath()))
+				.filter(this::evosuiteTestFileFilter)
+				.collect(Collectors.toList());
+	}
 	
 	public String getProjectWorkspace(String slug, String branch) throws FileNotFoundException {
 		String projectname = String.format("%s_%s-", slug, branch);
@@ -91,10 +114,16 @@ public class LocationUtils {
 				}
 			}
 		} catch (ClassFormatException | IOException e) {
-			log.throwing("LocationUtils", "fiterForMainClass", e);
+			log.error(e.getMessage());
 		}
 		
 		return hasMain;
 	}
 	
+	/**
+	 * Private sector
+	 */
+	private boolean evosuiteTestFileFilter(File filename) {
+		return filename.getName().endsWith("_ESTest.java");
+	}
 }
